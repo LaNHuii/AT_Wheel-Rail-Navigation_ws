@@ -1,0 +1,11 @@
+cmd_vel_guard:
+  ros__parameters:
+    max_vx: 0.45
+    max_vy: 0.45
+    max_wz: 0.80
+    command_timeout: 0.20
+    publish_rate: 50.0
+
+real_chassis_adapter:
+  ros__parameters:
+    transport: dry_run

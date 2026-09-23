@@ -1,0 +1,11 @@
+uint8 FREE_SURFACE=0
+uint8 RAIL_ENTRY=1
+uint8 ON_RAIL=2
+uint8 RAIL_EXIT=3
+
+uint8 requested_mode
+---
+bool accepted
+uint8 active_mode
+string message
+

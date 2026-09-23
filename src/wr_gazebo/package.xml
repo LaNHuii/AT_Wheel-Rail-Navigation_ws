@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>wr_gazebo</name>
+  <version>0.1.0</version>
+  <description>Gazebo Classic environments and staged physics checks for the wheel-rail chassis.</description>
+  <maintainer email="maintainer@example.com">AT Wheel-Rail Navigation Team</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>gazebo_msgs</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros2_control</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>wr_chassis_gateway</exec_depend>
+  <exec_depend>wr_description</exec_depend>
+  <exec_depend>wr_swerve_controller</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

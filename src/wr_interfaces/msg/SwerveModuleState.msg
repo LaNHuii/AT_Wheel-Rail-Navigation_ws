@@ -1,0 +1,7 @@
+string name
+float64 steering_angle
+float64 steering_velocity
+float64 steering_effort
+float64 drive_velocity
+float64 drive_effort
+

@@ -1,0 +1,20 @@
+rail_controller:
+  ros__parameters:
+    use_sim_time: true
+    initial_mode: 1
+    roller_radius: 0.075
+    clamp_max_angle: 0.174532925
+    clamp_angular_speed: 0.087266463
+    clamp_directions: [-1.0, 1.0, 1.0, -1.0]
+    minimum_probe_angle: 0.008726646
+    contact_effort_threshold: 1.0
+    contact_velocity_threshold: 0.03
+    contact_confirm_samples: 5
+    hard_effort_limit: 3.0
+    overtorque_confirm_samples: 2
+    clamp_timeout: 5.0
+    limit_settle_time: 0.3
+    command_timeout: 0.25
+    publish_rate: 50.0
+    simulate_contact: false
+    simulated_contact_angles: [0.034906585, 0.034906585, 0.034906585, 0.034906585]

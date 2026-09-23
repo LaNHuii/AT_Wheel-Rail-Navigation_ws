@@ -1,0 +1,56 @@
+coordinate_convention:
+  x: forward
+  y: left
+  z: up
+
+confirmed_from_robot_1_urdf:
+  source_date: 2026-09-22
+  operating_mass_kg: 20.0
+  steering_limit_rad: 2.88  # approximately +/-165 deg
+  steering_joint_centres_m:
+    front_left: [0.35500122, 0.33499869, 0.002]
+    front_right: [0.35499878, -0.33500131, 0.002]
+    rear_left: [-0.35499878, 0.33500131, 0.002]
+    rear_right: [-0.35500122, -0.33499869, 0.0056183]
+  # Per-link mass, centre of mass, and inertia values are copied verbatim into
+  # wr_chassis.urdf.xacro and checked to sum to 20 kg.
+
+confirmed_by_user:
+  track_rail_radius_m: 0.025
+  track_centre_spacing_m: 0.600
+
+derived_from_supplied_stl_for_collision:
+  tire_outer_radius_m: 0.0935
+  rail_roller_radius_m: 0.075
+  tire_axial_centre_m:
+    front_left: -0.0870
+    front_right: -0.0320
+    rear_right: -0.0300
+    rear_left: -0.0870
+  rail_roller_axial_centre_m:
+    front_left: -0.0585
+    front_right: -0.0030
+    rear_right: -0.0585
+    rear_left: -0.0580
+  rail_roller_width_m:
+    front_left: 0.006
+    front_right: 0.007
+    rear_right: 0.006
+    rear_left: 0.007
+
+provisional_for_simulation:
+  base_footprint_to_base_link_z_m: 0.253
+  simplified_chassis_collision_box_m: [0.70, 0.70, 0.16]
+  track_rail_centre_height_m: 0.025
+  mid360_xyz_m: [0.0, 0.0, 0.46]
+  front_camera_xyz_m: [0.39, 0.0, 0.31]
+  rear_camera_xyz_m: [-0.39, 0.0, 0.31]
+  simulated_clamp_contact_angle_rad: 0.034906585
+
+must_be_calibrated_before_real_vehicle_tuning:
+  - tire_effective_rolling_radius
+  - rail_roller_effective_rolling_radius
+  - steering_zero_offsets_and_signs
+  - drive_reduction_ratios_and_signs
+  - steering_contact_and_hard_safety_torque_thresholds
+  - mid360_imu_and_camera_extrinsics

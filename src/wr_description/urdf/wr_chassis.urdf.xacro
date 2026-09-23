@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="wheel_rail_chassis">
+  <!--
+    Coordinate convention: x forward, y left, z up.
+    Meshes and joint origins are imported from the user-provided robot.urdf.
+    Mass, centre of mass, and inertia are imported from robot(1).zip supplied
+    on 2026-09-22. Primitive collisions are simulation representations of the
+    same CAD geometry. Sensor extrinsics remain provisional.
+  -->
+
+  <xacro:property name="steering_limit" value="2.88"/>
+  <xacro:property name="tire_radius" value="0.0935"/>
+  <xacro:property name="rail_roller_radius" value="0.075"/>
+
+  <material name="chassis_grey"><color rgba="0.55 0.58 0.60 1.0"/></material>
+  <material name="tire_black"><color rgba="0.05 0.05 0.05 1.0"/></material>
+  <material name="sensor_blue"><color rgba="0.10 0.35 0.80 1.0"/></material>
+
+  <xacro:macro name="cad_inertial" params="mass xyz ixx ixy ixz iyy iyz izz">
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}"
+               iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+    </inertial>
+  </xacro:macro>
+
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <xacro:cad_inertial mass="8.92992076" xyz="0.00201008 0.00561163 0.14922432"
+      ixx="0.61681731" ixy="0.0014206" ixz="0.00123763"
+      iyy="0.70750456" iyz="0.00656312" izz="1.04021882"/>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://wr_description/meshes/base_link.stl"/></geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <!-- Convex primitives are used for stable simulation; the detailed STL remains visual-only. -->
+    <collision>
+      <origin xyz="0 0 0.17" rpy="0 0 0"/>
+      <geometry><box size="0.70 0.70 0.16"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.253" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:macro name="swerve_module" params="
+      prefix steering_mesh wheel_mesh
+      steering_xyz steering_rpy
+      drive_xyz drive_rpy tire_center_z tire_width roller_center_z roller_width
+      steering_mass steering_com steering_ixx steering_ixy steering_ixz
+      steering_iyy steering_iyz steering_izz
+      wheel_mass wheel_com wheel_ixx wheel_ixy wheel_ixz wheel_iyy wheel_iyz wheel_izz">
+    <link name="${prefix}_steering_link">
+      <xacro:cad_inertial mass="${steering_mass}" xyz="${steering_com}"
+        ixx="${steering_ixx}" ixy="${steering_ixy}" ixz="${steering_ixz}"
+        iyy="${steering_iyy}" iyz="${steering_iyz}" izz="${steering_izz}"/>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://wr_description/meshes/${steering_mesh}"/></geometry>
+        <material name="chassis_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.08" rpy="0 0 0"/>
+        <geometry><box size="0.18 0.10 0.16"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}_steering_joint" type="revolute">
+      <parent link="base_link"/>
+      <child link="${prefix}_steering_link"/>
+      <origin xyz="${steering_xyz}" rpy="${steering_rpy}"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-${steering_limit}" upper="${steering_limit}" effort="36.0" velocity="2.0"/>
+      <dynamics damping="0.2" friction="0.1"/>
+    </joint>
+
+    <link name="${prefix}_wheel_link">
+      <xacro:cad_inertial mass="${wheel_mass}" xyz="${wheel_com}"
+        ixx="${wheel_ixx}" ixy="${wheel_ixy}" ixz="${wheel_ixz}"
+        iyy="${wheel_iyy}" iyz="${wheel_iyz}" izz="${wheel_izz}"/>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://wr_description/meshes/${wheel_mesh}"/></geometry>
+        <material name="tire_black"/>
+      </visual>
+      <collision name="tire_collision">
+        <origin xyz="0 0 ${tire_center_z}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${tire_radius}" length="${tire_width}"/></geometry>
+      </collision>
+      <collision name="rail_roller_collision">
+        <origin xyz="0 0 ${roller_center_z}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${rail_roller_radius}" length="${roller_width}"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="${prefix}_steering_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <origin xyz="${drive_xyz}" rpy="${drive_rpy}"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="30.0" velocity="30.0"/>
+      <dynamics damping="0.05" friction="0.02"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:swerve_module
+    prefix="front_left" steering_mesh="Link_1.stl" wheel_mesh="Link_5.stl"
+    steering_xyz="0.35500122 0.33499869 0.002" steering_rpy="0 0 -0.00000367"
+    drive_xyz="0.02232944 -0.08710001 -0.16140002" drive_rpy="0 -1.57079633 1.57079633"
+    tire_center_z="-0.0870" tire_width="0.015" roller_center_z="-0.0585" roller_width="0.006"
+    steering_mass="0.71379061" steering_com="0.01759859 0.03101362 -0.07033028"
+    steering_ixx="0.00218804" steering_ixy="-0.00007379" steering_ixz="0.00031499"
+    steering_iyy="0.00360747" steering_iyz="0.00039126" steering_izz="0.00260771"
+    wheel_mass="2.05407079" wheel_com="-0.00007909 0.00000226 -0.08396633"
+    wheel_ixx="0.00451825" wheel_ixy="0.00000009" wheel_ixz="-0.00001155"
+    wheel_iyy="0.00452126" wheel_iyz="0.00000033" wheel_izz="0.00706026"/>
+  <xacro:swerve_module
+    prefix="front_right" steering_mesh="Link_2.stl" wheel_mesh="Link_6.stl"
+    steering_xyz="0.35499878 -0.33500131 0.002" steering_rpy="0 0 -0.00000367"
+    drive_xyz="-0.02232944 0.03210001 -0.16140002" drive_rpy="0 1.57079633 1.57079633"
+    tire_center_z="-0.0320" tire_width="0.015" roller_center_z="-0.0030" roller_width="0.007"
+    steering_mass="0.71209367" steering_com="-0.01784965 -0.03097885 -0.07149148"
+    steering_ixx="0.00216789" steering_ixy="-0.00007017" steering_ixz="-0.00030217"
+    steering_iyy="0.00358017" steering_iyz="-0.00037835" steering_izz="0.00259920"
+    wheel_mass="2.05440139" wheel_com="0.00007934 0.00000739 -0.02897195"
+    wheel_ixx="0.00451985" wheel_ixy="0.00000006" wheel_ixz="0.00001156"
+    wheel_iyy="0.00452167" wheel_iyz="0.00000036" wheel_izz="0.00706145"/>
+  <xacro:swerve_module
+    prefix="rear_left" steering_mesh="Link_3.stl" wheel_mesh="Link_7.stl"
+    steering_xyz="-0.35499878 0.33500131 0.002" steering_rpy="0 0 -0.00000367"
+    drive_xyz="0.02232944 -0.08710001 -0.16140002" drive_rpy="0 -1.57079633 1.57079633"
+    tire_center_z="-0.0870" tire_width="0.015" roller_center_z="-0.0580" roller_width="0.007"
+    steering_mass="0.71366934" steering_com="0.01790297 0.03100688 -0.07146857"
+    steering_ixx="0.00217108" steering_ixy="-0.00007036" steering_ixz="0.00030279"
+    steering_iyy="0.00358421" steering_iyz="0.00037733" steering_izz="0.00260104"
+    wheel_mass="2.05419203" wheel_com="-0.00007918 -0.00000128 -0.08397066"
+    wheel_ixx="0.00451934" wheel_ixy="0.00000008" wheel_ixz="-0.00001156"
+    wheel_iyy="0.00452192" wheel_iyz="-0.00000020" wheel_izz="0.00706070"/>
+  <xacro:swerve_module
+    prefix="rear_right" steering_mesh="Link_4.stl" wheel_mesh="Link_8.stl"
+    steering_xyz="-0.35500122 -0.33499869 0.0056183" steering_rpy="0 0 -0.00000367"
+    drive_xyz="-0.02232944 -0.02960001 -0.16501833" drive_rpy="0 -1.57079633 1.57079633"
+    tire_center_z="-0.0300" tire_width="0.015" roller_center_z="-0.0585" roller_width="0.006"
+    steering_mass="0.67887037" steering_com="-0.01780166 -0.03091473 -0.06922127"
+    steering_ixx="0.00186396" steering_ixy="-0.00006953" steering_ixz="-0.00030342"
+    steering_iyy="0.00324021" steering_iyz="-0.00037285" steering_izz="0.00255369"
+    wheel_mass="2.08899103" wheel_com="-0.00009966 -0.00003955 -0.03207379"
+    wheel_ixx="0.00461473" wheel_ixy="0.00000094" wheel_ixz="0.00001332"
+    wheel_iyy="0.00458059" wheel_iyz="0.00000388" wheel_izz="0.00710833"/>
+
+  <!-- Provisional sensor frames. Measure and replace these xyz/rpy values on the real chassis. -->
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/><child link="imu_link"/>
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+  </joint>
+
+  <link name="mid360_link">
+    <visual><geometry><cylinder radius="0.040" length="0.055"/></geometry><material name="sensor_blue"/></visual>
+  </link>
+  <joint name="mid360_joint" type="fixed">
+    <parent link="base_link"/><child link="mid360_link"/>
+    <origin xyz="0 0 0.46" rpy="0 0 0"/>
+  </joint>
+
+  <link name="front_camera_link"/>
+  <joint name="front_camera_joint" type="fixed">
+    <parent link="base_link"/><child link="front_camera_link"/>
+    <origin xyz="0.39 0 0.31" rpy="0 0 0"/>
+  </joint>
+
+  <link name="rear_camera_link"/>
+  <joint name="rear_camera_joint" type="fixed">
+    <parent link="base_link"/><child link="rear_camera_link"/>
+    <origin xyz="-0.39 0 0.31" rpy="0 0 3.141592654"/>
+  </joint>
+</robot>

@@ -1,0 +1,46 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    steering_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    wheel_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
+
+steering_position_controller:
+  ros__parameters:
+    joints:
+      - front_left_steering_joint
+      - front_right_steering_joint
+      - rear_right_steering_joint
+      - rear_left_steering_joint
+    interface_name: position
+
+wheel_velocity_controller:
+  ros__parameters:
+    joints:
+      - front_left_wheel_joint
+      - front_right_wheel_joint
+      - rear_right_wheel_joint
+      - rear_left_wheel_joint
+    interface_name: velocity
+
+swerve_controller:
+  ros__parameters:
+    use_sim_time: true
+    module_names: [front_left, front_right, rear_right, rear_left]
+    module_x: [0.355, 0.355, -0.355, -0.355]
+    module_y: [0.335, -0.335, -0.335, 0.335]
+    wheel_radius: 0.0935
+    steering_limit: 2.88
+    max_wheel_angular_velocity: 8.0
+    command_timeout: 0.25
+    publish_rate: 50.0
+    recenter_on_stop: true
+    recenter_delay: 0.50
+    recenter_angular_speed: 0.50
