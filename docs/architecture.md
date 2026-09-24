@@ -9,9 +9,10 @@
 5. Rail engagement is an explicit state with observable evidence, not an
    inference from the planned path.
 6. Unknown calibration values live in YAML/Xacro parameters.
-7. Entry and exit share a backend-independent transition policy; simulation
-   ground truth and future perception are only interchangeable observation
-   sources.
+7. Entry and exit use backend-independent transition policies; simulation
+   ground truth and future perception are interchangeable observation sources.
+8. Rail entry is fixed-front only: the 45-degree forward MID-360S observes the
+   entrance, and mission control inserts a 180-degree turn when needed.
 
 ## Runtime boundaries
 
@@ -39,14 +40,14 @@ or the final chassis protocol without changing mission logic.
 - Steering angle zero: wheel rolling direction parallel to +x.
 - Positive steering angle: counter-clockwise about +z.
 - Wheel order: front-left, front-right, rear-right, rear-left.
-- Rail entry can be performed from the front or rear; observations are always
-  transformed into `base_link` before control.
+- Rail entry is allowed only along `base_link` +x (the fixed sensor-front).
+- Normal completion exits forward; reverse exit remains the blocked-row retreat.
 
 ## Parameters awaiting measurement
 
 - Effective ground tyre rolling radius.
 - Effective inner rail-roller rolling radius.
-- MID-360 and both camera extrinsics.
+- Measured MID-360S xyz and both camera extrinsics (pitch is fixed at 45 degrees).
 - Motor-side gear ratios and sign conventions.
 - Steering torque bias, contact thresholds and temperature dependence.
 - Maximum admissible entry lateral and heading errors.

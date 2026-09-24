@@ -38,3 +38,18 @@ transmission, sensor or Gazebo elements. The navigation model may add primitive
 collision and provisional inertial values while preserving the supplied visual
 geometry. Every provisional value must remain configurable and documented.
 
+
+## D006: Fixed-front rail entry and staged proof
+
+- MID-360S is fixed at 45 degrees forward/downward.
+- Only the mechanical sensor-front may enter a rail first; mission planning must
+  insert a 180-degree turn when the next entrance faces the opposite direction.
+- One generic clamp command is reused with a module bitmask instead of creating
+  phase-specific hardware APIs.
+- Entry proof order is front pair, release, rear advance, then all four modules.
+- Front-pair success is intermediate evidence and never enables `ON_RAIL`.
+- Normal exit is forward; reverse exit remains available for blocked-row retreat.
+
+Reason: one forward 3D lidar avoids a second lidar while keeping entrance
+geometry observable. Two cameras may still serve front task perception and rear
+safety/reversing without claiming rear-first rail entry capability.

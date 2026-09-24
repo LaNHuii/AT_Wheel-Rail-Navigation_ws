@@ -14,6 +14,7 @@ install(
     scripts/verify_rail_entry.py
     scripts/verify_rail_entry_closed_loop.py
     scripts/verify_rail_entry_state_machine.py
+    scripts/verify_staged_rail_entry.py
     scripts/verify_rail_entry_phased.py
     scripts/verify_rail_exit.py
   DESTINATION lib/${PROJECT_NAME}

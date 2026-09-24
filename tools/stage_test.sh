@@ -7,6 +7,8 @@ artifact_root="${WR_NAV_ARTIFACT_ROOT:-/tmp/at_wheel_rail_navigation}"
 
 export PATH="/usr/bin:/bin:${PATH}"
 unset PYTHONHOME PYTHONPATH
+# Ignore unrelated user-site pytest plugins (for example incompatible anyio).
+export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 source /opt/ros/humble/setup.bash
 if [[ -f "${artifact_root}/install/setup.bash" ]]; then
   source "${artifact_root}/install/setup.bash"

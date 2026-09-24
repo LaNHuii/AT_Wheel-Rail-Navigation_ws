@@ -43,6 +43,7 @@ provisional_for_simulation:
   simplified_chassis_collision_box_m: [0.70, 0.70, 0.16]
   track_rail_centre_height_m: 0.025
   mid360_xyz_m: [0.0, 0.0, 0.46]
+  mid360_rpy_rad: [0.0, 0.785398163, 0.0]  # fixed 45 deg forward/downward pitch
   front_camera_xyz_m: [0.39, 0.0, 0.31]
   rear_camera_xyz_m: [-0.39, 0.0, 0.31]
   simulated_clamp_contact_angle_rad: 0.034906585

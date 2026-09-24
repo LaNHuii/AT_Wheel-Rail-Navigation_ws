@@ -3,6 +3,13 @@ rail_controller:
     use_sim_time: true
     initial_mode: 1
     roller_radius: 0.075
+    tire_radius: 0.0935
+    module_x: [0.355, 0.355, -0.355, -0.355]
+    module_y: [0.335, -0.335, -0.335, 0.335]
+    steering_limit: 2.88
+    max_wheel_angular_velocity: 8.0
+    auto_start_probe: false
+    initial_probe_mask: 15
     clamp_max_angle: 0.174532925
     clamp_angular_speed: 0.087266463
     clamp_directions: [-1.0, 1.0, 1.0, -1.0]

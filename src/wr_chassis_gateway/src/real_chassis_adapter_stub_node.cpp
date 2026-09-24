@@ -51,8 +51,8 @@ private:
     clamp_preview_publisher_->publish(*message);
     RCLCPP_WARN(
       get_logger(),
-      "Dry-run clamp command: sequence=%u action=%u; no motor command transmitted",
-      message->sequence_id, message->action);
+      "Dry-run clamp command: sequence=%u action=%u mask=0x%02x; no motor command transmitted",
+      message->sequence_id, message->action, message->module_mask);
   }
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr preview_publisher_;

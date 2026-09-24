@@ -69,9 +69,11 @@ Nav2 / 轨内控制 / 遥控
 
 夹轨不复用普通速度命令，而通过可替换的语义接口交给底盘后端：
 
-- `wr_interfaces/msg/RailClampCommand`：开始探测、取消、释放，以及最大探测角、探测速度和超时；
-- `wr_interfaces/msg/RailClampFeedback`：四轮独立接触锁存、当前角度/速度/转矩和失败原因；
+- `wr_interfaces/msg/RailClampCommand`：以一个 `module_mask` 通用字段选择前轮组或四轮，复用开始探测、取消、释放、最大角度、速度和超时；
+- `wr_interfaces/msg/RailClampFeedback`：回传当前操作掩码、四轮独立接触锁存、角度/速度/转矩和失败原因；
 - `wr_interfaces/srv/SetRailMode`：只有四轮均确认接触后才允许进入轨内模式。
+
+进轨顺序固定为：前端对准 → 前轮组探测确认 → 前轮组释放回零 → 后轮组前进上轨 → 四轮终验。前轮组成功只发布 `FRONT_VERIFIED`，不能提前进入轨内模式；只有四轮终验成功才进入 `ON_RAIL`。
 
 仿真后端用显式虚拟接触事件验证状态机，因为 Gazebo 的位置控制器不会提供可信的转向堵转力矩。实车后端必须关闭 `simulate_contact`，使用电控回传的四轮独立转矩或等效电流；接触阈值、硬过转矩阈值和电机驱动器保护值均须由电控标定。单轮接触后，上位机保持该轮当时角度，不再继续增加夹角。
 

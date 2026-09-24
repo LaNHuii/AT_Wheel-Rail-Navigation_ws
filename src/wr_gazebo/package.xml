@@ -20,6 +20,8 @@
   <exec_depend>wr_chassis_gateway</exec_depend>
   <exec_depend>wr_description</exec_depend>
   <exec_depend>wr_swerve_controller</exec_depend>
+  <exec_depend>wr_rail_controller</exec_depend>
+  <exec_depend>wr_interfaces</exec_depend>
   <exec_depend>xacro</exec_depend>
   <export><build_type>ament_cmake</build_type></export>
 </package>

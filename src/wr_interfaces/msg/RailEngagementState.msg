@@ -8,6 +8,9 @@ uint8 LEFT_PARTIAL=6
 uint8 RIGHT_PARTIAL=7
 uint8 OBSTRUCTED=8
 uint8 SENSOR_FAULT=9
+uint8 FRONT_VERIFIED=10
+uint8 ADVANCING_REAR=11
+uint8 FINAL_VERIFYING=12
 
 std_msgs/Header header
 uint8 state

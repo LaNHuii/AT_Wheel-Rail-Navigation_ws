@@ -12,8 +12,8 @@ repository and all external reference projects are treated as read-only inputs.
 - Four independently driven and independently steered wheel modules
 - Steering range: approximately -165 to +165 degrees in the supplied model
 - Four inner rail rollers driven coaxially with the ground tyres
-- Livox MID-360 with built-in IMU
-- Front and rear MaixCAM Pro cameras
+- Livox MID-360S with built-in IMU, fixed 45 degrees forward/downward
+- Front and rear MaixCAM Pro cameras; only the fixed sensor-front enters rails first
 
 ## Package layout
 
@@ -32,15 +32,20 @@ will be added behind the contracts in `wr_interfaces`.
 ## Build
 
 ```bash
-source /opt/ros/humble/setup.bash
-colcon build --symlink-install
-source install/setup.bash
+tools/stage_build.sh
+source /tmp/at_wheel_rail_navigation/install/setup.bash
+tools/stage_test.sh
 ```
+
+The stage scripts keep generated ROSIDL artifacts in an ASCII-only path and
+select the Ubuntu system Python, avoiding the known non-ASCII-path and active
+Conda conflicts on this development machine.
 
 ## Current status
 
 The physical-model, flat-ground, on-rail, clamp, natural-entry and natural-exit
-Gazebo baseline is implemented. The model uses the supplied 20 kg mass/COM/
+Gazebo baseline is implemented. Fixed-front staged entry now verifies the front pair,
+releases it, advances the rear pair and requires a final four-module proof. The model uses the supplied 20 kg mass/COM/
 inertia data and separate primitive collision bodies for tyres and inner rail
 rollers. Real motor torque thresholds, sensor extrinsics and the physical
 computer-to-STM32 protocol remain calibration/integration work; the real adapter
