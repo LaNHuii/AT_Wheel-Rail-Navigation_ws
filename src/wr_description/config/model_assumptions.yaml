@@ -45,8 +45,13 @@ provisional_for_simulation:
   mid360_xyz_m: [0.0, 0.0, 0.46]
   mid360_rpy_rad: [0.0, 0.785398163, 0.0]  # fixed 45 deg forward/downward pitch
   front_camera_xyz_m: [0.39, 0.0, 0.31]
-  rear_camera_xyz_m: [-0.39, 0.0, 0.31]
+  front_camera_model: pending_rgbd_camera_selection
   simulated_clamp_contact_angle_rad: 0.034906585
+
+sensor_roles:
+  primary_imu_source: chassis_imu_via_stm32_can_fd
+  mid360_pointcloud_transport: native_ethernet
+  mid360_builtin_imu_role: not_used_as_primary_localization_imu
 
 must_be_calibrated_before_real_vehicle_tuning:
   - tire_effective_rolling_radius
@@ -54,4 +59,4 @@ must_be_calibrated_before_real_vehicle_tuning:
   - steering_zero_offsets_and_signs
   - drive_reduction_ratios_and_signs
   - steering_contact_and_hard_safety_torque_thresholds
-  - mid360_imu_and_camera_extrinsics
+  - mid360_chassis_imu_and_camera_extrinsics

@@ -1,0 +1,22 @@
+uint8 IDLE=0
+uint8 FOLLOWING=1
+uint8 TARGET_STATIONARY=2
+uint8 LOST_WAIT=3
+uint8 SEARCHING=4
+uint8 WAITING_FOR_TARGET=5
+uint8 OBSTACLE_HOLD=6
+uint8 TRANSITION_HOLD=7
+uint8 SENSOR_HOLD=8
+uint8 HARDWARE_HOLD=9
+
+std_msgs/Header header
+uint8 state
+uint32 session_id
+uint32 binding_id
+int64 tracker_id
+uint8 chassis_mode
+float32 desired_gap
+float32 measured_gap
+bool target_valid
+bool command_active
+string reason

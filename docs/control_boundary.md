@@ -8,14 +8,15 @@
 - `linear.y`：车体左向速度 `vy`，m/s；
 - `angular.z`：车体逆时针角速度 `wz`，rad/s。
 
-经后续速度源仲裁后进入 `/cmd_vel`，再由 `cmd_vel_guard` 完成有限值检查、同比例限速和 200 ms 超时清零，输出 `/cmd_vel_chassis`。
+各模块分别发布到 `/cmd_vel_follow`、`/cmd_vel_navigation`、`/cmd_vel_transition` 或 `/cmd_vel_manual`。行为树通过 `SetMotionSource` 选择唯一来源，`cmd_vel_arbiter` 输出 `/cmd_vel_selected`；随后 `cmd_vel_guard` 完成有限值检查、同比例限速和 200 ms 超时清零，输出 `/cmd_vel_chassis`。
 
 ## 后端分支
 
 ```text
-Nav2 / 轨内控制 / 遥控
+人物跟随 / Nav2 / 进退轨 / 遥控
           │
-       /cmd_vel
+  cmd_vel_arbiter（唯一运动权）
+          │ /cmd_vel_selected
           │
   cmd_vel_guard（上位机安全层）
           │
@@ -27,7 +28,7 @@ Nav2 / 轨内控制 / 遥控
      │         │
  舵轮运动学   通信封装
      │         │
- 8个仿真关节  STM32 chassis_service
+ 8个仿真关节  SocketCAN（专用CAN-FD）
                │
           下位机舵轮运动学
                │
@@ -63,7 +64,7 @@ Nav2 / 轨内控制 / 遥控
 
 不启动 `wr_swerve_controller`，只把 `/cmd_vel_chassis` 交给实车通信适配器。STM32负责舵轮运动学、电机方向、转向零点和电机闭环。
 
-当前 `real_chassis_adapter_stub_node` 仅为 `dry_run`：它可证明实车配置只收到 `vx、vy、wz`，但不会发送任何字节或 CAN 帧。选择串口、CAN或以太网前不得把它描述为已经对接实车。
+`real_chassis_adapter_node` 支持 `dry_run` 和 Linux SocketCAN 两种模式。实车配置通过专用 CAN-FD 下发速度、控制模式和夹轨任务，并接收整车、四模块、主 IMU、任务结果和确认帧。默认配置仍为 `dry_run`，必须完成电控联调和安全阈值标定后才能切换实车。
 
 ## 夹轨语义接口
 
@@ -79,14 +80,17 @@ Nav2 / 轨内控制 / 遥控
 
 ## 协议选型边界
 
-- 工控机—STM32：待定，可选择以太网、增加的新串口或工控机 CAN；最终只影响实车通信适配器和 STM32新入口。
+- 工控机—STM32：固定为专用 CAN-FD，Linux 侧使用 SocketCAN `can0`。不得与现有电机 CAN 总线静默混接。
 - STM32—电机：继续使用现有 FDCAN1/FDCAN2，不由导航上位机接管。
-- MID-360—工控机：独立以太网传感器链路，与底盘命令协议无关。
-- MaixCAM Pro—工控机：根据相机实际支持选 USB 或以太网，与电机 CAN 总线无关。
+- MID-360—工控机：点云继续使用雷达原生以太网链路；内置 IMU 不再作为主 IMU。
+- 底盘主 IMU—STM32—工控机：主 IMU 接入 STM32，由 STM32 采样、打下位机时间戳并通过专用 CAN-FD 发送。
+- 前置 RGB-D 相机—工控机：根据最终型号选 USB 或以太网，与电机 CAN 总线无关。
+
+完整线协议、周期和 SDK 契约见 `docs/can_bt_fsm_stm32_interface.md`。
 
 ## 双层安全
 
-- 上位机：有限值检查、速度限制、命令源仲裁、200 ms无命令清零。
+- 上位机：唯一速度源仲裁、有限值检查、速度限制、200 ms无命令清零；CAN 适配器另有独立 250 ms 上游看门狗。
 - 下位机：通信超时、运动学检查、电机反馈检查、故障锁存和执行器安全停止。
 
 夹轨时，上位机负责 0～10° 的缓慢探测、单轮接触锁存、总超时和模式编排；下位机负责电流/转矩硬限制、堵转保护、温度保护和失联急停。上位机给出的 10° 是搜索上限，不是必须到达的目标角。

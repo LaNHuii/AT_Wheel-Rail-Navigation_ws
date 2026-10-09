@@ -1,6 +1,6 @@
 rail_controller:
   ros__parameters:
-    use_sim_time: true
+    use_sim_time: false
     initial_mode: 1
     roller_radius: 0.075
     tire_radius: 0.0935
@@ -22,6 +22,8 @@ rail_controller:
     clamp_timeout: 5.0
     limit_settle_time: 0.3
     command_timeout: 0.25
+    feedback_timeout: 0.20
+    use_chassis_module_feedback: true
     publish_rate: 50.0
     simulate_contact: false
     simulated_contact_angles: [0.034906585, 0.034906585, 0.034906585, 0.034906585]

@@ -1,0 +1,22 @@
+lidar_safety:
+  ros__parameters:
+    base_frame: base_link
+    # base_link is provisionally 0.253 m above the ground plane.
+    min_obstacle_z: -0.22
+    max_obstacle_z: 1.50
+    robot_front_x: 0.45
+    self_min_x: -0.46
+    self_max_x: 0.46
+    self_half_width: 0.40
+    self_min_z: -0.24
+    self_max_z: 0.55
+    free_corridor_half_width: 0.43
+    rail_corridor_half_width: 0.24
+    hard_stop_distance: 0.18
+    free_block_distance: 0.65
+    rail_block_distance: 1.00
+    rotation_radius: 0.62
+    target_exclusion_radius: 0.42
+    minimum_points: 4
+    target_timeout: 0.30
+    max_points: 60000

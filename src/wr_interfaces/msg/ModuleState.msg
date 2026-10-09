@@ -1,0 +1,26 @@
+uint8 MODULE_FL=0
+uint8 MODULE_FR=1
+uint8 MODULE_RR=2
+uint8 MODULE_RL=3
+
+std_msgs/Header header
+uint32 frame_sequence_id
+uint8 module_id
+bool sample_valid
+bool steering_online
+bool drive_online
+bool steering_zero_valid
+bool steering_torque_valid
+bool drive_position_valid
+uint16 steering_fault_bits
+uint16 drive_fault_bits
+float64 steering_angle
+float64 steering_velocity
+float64 steering_current
+float64 steering_torque
+float64 drive_position
+float64 drive_velocity
+float64 drive_current
+float64 drive_torque
+float32 steering_temperature
+float32 drive_temperature

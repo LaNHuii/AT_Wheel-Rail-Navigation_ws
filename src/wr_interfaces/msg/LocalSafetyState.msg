@@ -1,0 +1,8 @@
+std_msgs/Header header
+bool data_fresh
+bool emergency_stop
+bool forward_path_blocked
+bool bypass_active
+bool rotation_safe
+float32 nearest_obstacle_distance
+string reason

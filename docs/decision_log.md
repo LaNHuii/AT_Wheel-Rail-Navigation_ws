@@ -12,7 +12,9 @@ possible later.
 
 ## D002: Mixed implementation language
 
-- C++ for kinematics, controllers, point-cloud processing and hardware adapters.
+- C++ for kinematics, hard real-time-adjacent guards and hardware adapters.
+- Python/NumPy for the initial point-cloud safety baseline; profile it on the IPC
+  before deciding whether the production implementation must move to C++.
 - Python for launch, mission orchestration and experiment tooling.
 
 ## D003: Chassis boundary
@@ -21,7 +23,7 @@ possible later.
 - Standard feedback: `sensor_msgs/msg/JointState`, `nav_msgs/msg/Odometry` and
   `wr_interfaces/msg/SwerveState`.
 - Rail engagement feedback: `wr_interfaces/msg/RailEngagementState`.
-- Transport-specific CAN/serial details belong to a future hardware adapter.
+- Transport-specific CAN-FD details belong only to `wr_chassis_gateway`.
 
 ## D004: Localization rollout
 
@@ -48,8 +50,18 @@ geometry. Every provisional value must remain configurable and documented.
   phase-specific hardware APIs.
 - Entry proof order is front pair, release, rear advance, then all four modules.
 - Front-pair success is intermediate evidence and never enables `ON_RAIL`.
-- Normal exit is forward; reverse exit remains available for blocked-row retreat.
+- Normal exit is forward. Reverse exit remains in the compatibility interface,
+  but automatic retreat is disabled while no rearward perception is installed.
+
+## 2026-10-08：任务转为人物跟随采收运输
+
+- 指定采摘者负责带路；系统不再根据覆盖清单自主选择下一条轨道。
+- 视觉使用一个前置 RGB-D 相机，MID-360S 固定向前下倾 45°；取消后置相机模型。
+- 自由路面允许跟随、车头转向和有界绕障；轨道内只允许纵向跟随。
+- 自由路面丢失目标后先停 30 s，再在整车旋转区域安全时搜索一圈；轨道内丢失只等待。
+- 明确丢失后允许视觉重新绑定其他合适人员；健康目标不得因旁人更近而被替换。
+- 行为树负责任务编排和运动权切换，人物跟随、点云安全及进退轨各自使用局部状态机。
 
 Reason: one forward 3D lidar avoids a second lidar while keeping entrance
-geometry observable. Two cameras may still serve front task perception and rear
-safety/reversing without claiming rear-first rail entry capability.
+geometry observable. The current vehicle has one front RGB-D camera and no
+rearward perception, so reverse autonomous motion is outside the accepted scope.

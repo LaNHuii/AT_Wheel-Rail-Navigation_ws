@@ -1,0 +1,36 @@
+uint8 ENTER=1
+uint8 EXIT_FORWARD=2
+uint8 EXIT_REVERSE=3
+
+uint8 operation
+uint32 track_id
+float32 timeout
+---
+uint8 RESULT_SUCCESS=0
+uint8 RESULT_REJECTED=1
+uint8 RESULT_TIMEOUT=2
+uint8 RESULT_CLAMP_FAILED=3
+uint8 RESULT_PERCEPTION_LOST=4
+uint8 RESULT_CANCELLED=5
+uint8 RESULT_HARDWARE_FAULT=6
+
+bool success
+uint8 result_code
+uint8 final_mode
+string message
+---
+uint8 PHASE_IDLE=0
+uint8 PHASE_ALIGN=1
+uint8 PHASE_APPROACH=2
+uint8 PHASE_FRONT_PROBE=3
+uint8 PHASE_FRONT_RELEASE=4
+uint8 PHASE_REAR_ADVANCE=5
+uint8 PHASE_FINAL_PROBE=6
+uint8 PHASE_CONFIRMED=7
+uint8 PHASE_EXITING=8
+uint8 PHASE_FAILED=9
+
+uint8 phase
+float32 progress
+uint8 active_module_mask
+string message

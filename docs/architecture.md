@@ -11,24 +11,32 @@
 6. Unknown calibration values live in YAML/Xacro parameters.
 7. Entry and exit use backend-independent transition policies; simulation
    ground truth and future perception are interchangeable observation sources.
-8. Rail entry is fixed-front only: the 45-degree forward MID-360S observes the
-   entrance, and mission control inserts a 180-degree turn when needed.
+8. Rail entry is fixed-front only: the 45-degree forward MID-360S and front RGB-D
+   camera observe the entrance; the carrier turns around first when necessary.
+9. The behavior tree owns mission sequencing; bounded local state machines own
+   rail entry, exit and clamp execution. Only the chassis gateway accesses CAN.
+10. The chassis-mounted IMU delivered by STM32 over CAN-FD is the primary IMU.
+    The MID-360S IMU is not fused as a second primary source.
 
 ## Runtime boundaries
 
 ```text
-Mission / coverage planner
-          |
-          +---- free surface ----> Nav2 ----> /cmd_vel
-          |
-          +---- rail entry ------> rail entry controller
-          |
-          +---- on rail ---------> rail longitudinal controller
-                                          |
-                                chassis command adapter
-                                  /                 \
-                           Gazebo adapter       STM32 adapter
+RGB-D target ──> FollowPerson action / local follow FSM ──> /cmd_vel_follow
+MID-360S ─────> local safety + obstacle map ──────────────> Nav2 bypass (later)
+rail detector ─> ExecuteRailTransition / local FSM ───────> /cmd_vel_transition
+                                      │
+                     behavior tree selects one motion source
+                                      ▼
+                              cmd_vel_arbiter
+                                      ▼
+                          limit + watchdog + CAN adapter
+                                      ▼
+                                     STM32
 ```
+
+The task layer follows the currently bound worker. It does not autonomously
+select the next crop row. Track records are an audit aid and never imply that a
+row was harvested merely because the chassis traversed it.
 
 Perception and localization publish stable outputs independently of their
 backends. This permits replacing FAST-LIO2, the rail detector, camera assistance,
@@ -41,13 +49,15 @@ or the final chassis protocol without changing mission logic.
 - Positive steering angle: counter-clockwise about +z.
 - Wheel order: front-left, front-right, rear-right, rear-left.
 - Rail entry is allowed only along `base_link` +x (the fixed sensor-front).
-- Normal completion exits forward; reverse exit remains the blocked-row retreat.
+- Normal completion exits forward. Automatic blocked-row retreat is disabled
+  until rearward perception is added and separately accepted.
 
 ## Parameters awaiting measurement
 
 - Effective ground tyre rolling radius.
 - Effective inner rail-roller rolling radius.
-- Measured MID-360S xyz and both camera extrinsics (pitch is fixed at 45 degrees).
+- Measured MID-360S, chassis IMU and front RGB-D camera extrinsics (MID-360S pitch is
+  fixed at 45 degrees).
 - Motor-side gear ratios and sign conventions.
 - Steering torque bias, contact thresholds and temperature dependence.
 - Maximum admissible entry lateral and heading errors.

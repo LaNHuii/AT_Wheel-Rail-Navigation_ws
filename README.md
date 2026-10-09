@@ -1,6 +1,6 @@
 # AT Wheel-Rail Navigation Workspace
 
-ROS 2 Humble workspace for the wheel-rail integrated greenhouse chassis.
+ROS 2 Humble workspace for a person-following wheel-rail greenhouse carrier.
 
 This repository contains the navigation-side software only. The STM32 chassis
 repository and all external reference projects are treated as read-only inputs.
@@ -12,8 +12,11 @@ repository and all external reference projects are treated as read-only inputs.
 - Four independently driven and independently steered wheel modules
 - Steering range: approximately -165 to +165 degrees in the supplied model
 - Four inner rail rollers driven coaxially with the ground tyres
-- Livox MID-360S with built-in IMU, fixed 45 degrees forward/downward
-- Front and rear MaixCAM Pro cameras; only the fixed sensor-front enters rails first
+- Livox MID-360S point cloud, fixed 45 degrees forward/downward; its built-in
+  IMU is not used as the primary localization IMU
+- Chassis-mounted primary IMU sampled by STM32 and sent to the IPC over CAN-FD
+- One front RGB-D camera (exact model pending) and one forward/downward MID-360S;
+  only this sensor-front enters rails first
 
 ## Package layout
 
@@ -23,11 +26,13 @@ repository and all external reference projects are treated as read-only inputs.
 | `wr_description` | Xacro robot model, meshes and sensor frames |
 | `wr_swerve_controller` | Gazebo-side swerve kinematics, steering recentering and joint commands |
 | `wr_rail_controller` | Rail clamp state machine, rail-mode drive and entry/exit transition policies |
-| `wr_chassis_gateway` | Replaceable dry-run boundary for the future real chassis protocol |
+| `wr_chassis_gateway` | Dry-run/SocketCAN backends, CAN-FD codec and STM32 SDK contract |
+| `wr_person_following` | Behavior-tree action endpoint and free/rail local follow state machine |
+| `wr_lidar_safety` | MID-360S freshness, stop corridor and safe-rotation evidence |
 | `wr_gazebo` | Gazebo worlds, controller configuration and simulation launch files |
 
-Additional localization, rail-perception, mission and hardware-adapter packages
-will be added behind the contracts in `wr_interfaces`.
+Localization, rail-entrance perception, bounded free-surface bypass and harvest
+audit packages will be added behind the contracts in `wr_interfaces`.
 
 ## Build
 
@@ -43,10 +48,12 @@ Conda conflicts on this development machine.
 
 ## Current status
 
-The physical-model, flat-ground, on-rail, clamp, natural-entry and natural-exit
-Gazebo baseline is implemented. Fixed-front staged entry now verifies the front pair,
-releases it, advances the rear pair and requires a final four-module proof. The model uses the supplied 20 kg mass/COM/
-inertia data and separate primitive collision bodies for tyres and inner rail
-rollers. Real motor torque thresholds, sensor extrinsics and the physical
-computer-to-STM32 protocol remain calibration/integration work; the real adapter
-is intentionally dry-run until those values are supplied.
+The earlier physical-model, clamp and fixed-front staged-entry Gazebo baseline is
+preserved. The current real-vehicle branch now has stable vision/safety/follow
+interfaces, a bounded person-follow local state machine, conservative point-cloud
+safety zones, a single-owner velocity arbiter, an IPC-to-STM32 CAN-FD adapter and
+primary chassis-IMU transport. Free-surface obstacle bypass, the RGB-D target
+producer, rail-entrance point-cloud estimation, local odometry and the executable
+top-level behavior tree are not yet complete. Real torque thresholds, sensor
+extrinsics, CAN hardware bring-up and fault-code calibration also remain vehicle
+integration work.

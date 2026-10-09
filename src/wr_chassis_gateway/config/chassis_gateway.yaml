@@ -9,3 +9,15 @@ cmd_vel_guard:
 real_chassis_adapter:
   ros__parameters:
     transport: dry_run
+    can_interface: can0
+    session_id: 1
+    command_rate: 50.0
+    receive_rate: 500.0
+    time_sync_rate: 1.0
+    valid_for_ms: 200
+    upstream_command_timeout: 0.25
+    module_state_timeout: 0.20
+    imu_frame_id: imu_link
+    imu_angular_velocity_covariance_diagonal: [0.0004, 0.0004, 0.0004]
+    imu_linear_acceleration_covariance_diagonal: [0.04, 0.04, 0.04]
+    imu_orientation_covariance_diagonal: [0.01, 0.01, 0.02]

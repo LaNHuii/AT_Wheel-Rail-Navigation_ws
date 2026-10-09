@@ -9,6 +9,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 from wr_interfaces.msg import (
+    ChassisState,
     RailClampCommand,
     RailClampFeedback,
     RailEngagementState,
@@ -52,6 +53,8 @@ class RailControllerNode(Node):
         self.declare_parameter('clamp_timeout', 5.0)
         self.declare_parameter('limit_settle_time', 0.3)
         self.declare_parameter('command_timeout', 0.25)
+        self.declare_parameter('feedback_timeout', 0.20)
+        self.declare_parameter('use_chassis_module_feedback', False)
         self.declare_parameter('publish_rate', 50.0)
         self.declare_parameter('simulate_contact', False)
         self.declare_parameter(
@@ -71,6 +74,9 @@ class RailControllerNode(Node):
         self.clamp_timeout = float(self.get_parameter('clamp_timeout').value)
         self.limit_settle_time = float(self.get_parameter('limit_settle_time').value)
         self.command_timeout = float(self.get_parameter('command_timeout').value)
+        self.feedback_timeout = float(self.get_parameter('feedback_timeout').value)
+        self.use_chassis_module_feedback = bool(
+            self.get_parameter('use_chassis_module_feedback').value)
         self.publish_rate = float(self.get_parameter('publish_rate').value)
         self.simulate_contact = bool(self.get_parameter('simulate_contact').value)
         self.clamp_directions = tuple(
@@ -85,7 +91,7 @@ class RailControllerNode(Node):
         if min(
             self.roller_radius, self.tire_radius, self.steering_limit,
             self.max_wheel_angular_velocity, self.max_angle, self.clamp_speed,
-            self.clamp_timeout, self.command_timeout, self.publish_rate,
+            self.clamp_timeout, self.command_timeout, self.feedback_timeout, self.publish_rate,
         ) <= 0.0 or self.limit_settle_time < 0.0:
             raise ValueError('rail controller radii, limits, timeouts, and rates are invalid')
 
@@ -107,6 +113,7 @@ class RailControllerNode(Node):
         self.efforts = [0.0] * 4
         self.have_joint_state = [False] * 4
         self.have_effort_state = [False] * 4
+        self.feedback_received_at = [self.get_clock().now()] * 4
         self.hold_angles = [0.0] * 4
         self.contact_flags = [False] * 4
         self.active_mode = int(self.get_parameter('initial_mode').value)
@@ -138,6 +145,7 @@ class RailControllerNode(Node):
         self.clamp_feedback_publisher = self.create_publisher(
             RailClampFeedback, 'rail_clamp_feedback', 10)
         self.create_subscription(JointState, 'joint_states', self.on_joint_state, 10)
+        self.create_subscription(ChassisState, 'chassis_state', self.on_chassis_state, 10)
         self.create_subscription(Twist, 'cmd_vel', self.on_command, 10)
         self.create_subscription(
             RailClampCommand, 'rail_clamp_request', self.on_clamp_request, 10)
@@ -173,7 +181,8 @@ class RailControllerNode(Node):
         self.hold_angles = list(self.positions)
         self.failed_reason = ''
         self.feedback_state = RailClampFeedback.PROBING
-        self.probe_armed = all(self.have_joint_state)
+        self.probe_armed = all(
+            self.feedback_is_fresh(index) for index in self.selected_indices(module_mask))
         self.probe_active = True
         self.release_active = False
         if module_mask == RailClampCommand.FRONT_PAIR:
@@ -197,6 +206,12 @@ class RailControllerNode(Node):
             self.start_clamp(message.module_mask, message.sequence_id)
         elif message.action == RailClampCommand.RELEASE:
             self.start_release(message.module_mask, message.sequence_id)
+        elif message.action == RailClampCommand.HOLD:
+            selected = self.selected_indices(message.module_mask)
+            for index in selected:
+                self.hold_angles[index] = self.positions[index]
+            self.publish_semantic_command(
+                RailClampCommand.HOLD, message.module_mask)
         elif message.action == RailClampCommand.CANCEL:
             self.next_sequence(message.sequence_id)
             self.active_module_mask = message.module_mask & RailClampCommand.ALL_MODULES
@@ -208,6 +223,8 @@ class RailControllerNode(Node):
                 RailClampCommand.CANCEL, self.active_module_mask)
 
     def on_joint_state(self, message):
+        if self.use_chassis_module_feedback:
+            return
         index_by_name = {name: index for index, name in enumerate(message.name)}
         for module_index, module_name in enumerate(MODULE_NAMES):
             joint_index = index_by_name.get(module_name + '_steering_joint')
@@ -221,6 +238,34 @@ class RailControllerNode(Node):
             if joint_index < len(message.effort):
                 self.efforts[module_index] = message.effort[joint_index]
                 self.have_effort_state[module_index] = True
+            self.feedback_received_at[module_index] = self.get_clock().now()
+
+    def on_chassis_state(self, message):
+        if not self.use_chassis_module_feedback:
+            return
+        received_at = self.get_clock().now()
+        for module in message.modules:
+            index = int(module.module_id)
+            if index < 0 or index >= 4:
+                continue
+            valid = bool(
+                module.sample_valid and module.steering_online
+                and module.steering_zero_valid)
+            self.have_joint_state[index] = valid
+            self.have_effort_state[index] = bool(valid and module.steering_torque_valid)
+            if not valid:
+                continue
+            self.positions[index] = float(module.steering_angle)
+            self.velocities[index] = float(module.steering_velocity)
+            self.efforts[index] = float(module.steering_torque)
+            self.feedback_received_at[index] = received_at
+
+    def feedback_is_fresh(self, index, require_effort=False):
+        age = (
+            self.get_clock().now() - self.feedback_received_at[index]
+        ).nanoseconds / 1e9
+        valid = self.have_joint_state[index] and age <= self.feedback_timeout
+        return valid and (self.have_effort_state[index] if require_effort else True)
 
     def on_command(self, message):
         values = (message.linear.x, message.linear.y, message.angular.z)
@@ -334,7 +379,8 @@ class RailControllerNode(Node):
     def update_entry(self):
         selected = self.selected_indices(self.active_module_mask)
         elapsed = (self.get_clock().now() - self.clamp_started_at).nanoseconds / 1e9
-        if not self.simulate_contact and not all(self.have_effort_state[i] for i in selected):
+        if not self.simulate_contact and not all(
+                self.feedback_is_fresh(i, require_effort=True) for i in selected):
             if elapsed > 0.5:
                 self.fail_clamp(
                     'steering effort feedback missing during clamp probe',
@@ -361,6 +407,10 @@ class RailControllerNode(Node):
                 self.get_logger().info(
                     f'{MODULE_NAMES[index]} clamp contact at '
                     f'{math.degrees(self.positions[index]):.2f} deg')
+                # Real STM32 stops only this module; the upper computer still
+                # decides whether the accumulated evidence means rail engagement.
+                self.publish_semantic_command(
+                    RailClampCommand.HOLD, 1 << index)
 
         if all(self.contact_flags[index] for index in selected):
             self.probe_active = False
@@ -412,9 +462,15 @@ class RailControllerNode(Node):
                 self.front_verified_latched = False
 
     def on_timer(self):
-        if not all(self.have_joint_state):
+        if not all(self.feedback_is_fresh(index) for index in range(4)):
+            if self.probe_active and not self.failed_reason:
+                self.fail_clamp(
+                    'steering feedback became stale during clamp probe',
+                    RailClampFeedback.SENSOR_FAULT)
             self.publish_commands(self.positions, [0.0] * 4)
-            self.publish_state(RailEngagementState.UNKNOWN, 'waiting for four steering joints')
+            self.publish_state(
+                RailEngagementState.SENSOR_FAULT,
+                self.failed_reason or 'waiting for fresh feedback from four steering modules')
             return
 
         if self.probe_active and not self.probe_armed:

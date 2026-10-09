@@ -83,7 +83,8 @@ def test_cad_mass_and_primitive_contact_geometry():
 def test_required_sensor_frames_are_present():
     root = expanded_root()
     links = {link.attrib['name'] for link in root.findall('link')}
-    assert {'imu_link', 'mid360_link', 'front_camera_link', 'rear_camera_link'} <= links
+    assert {'imu_link', 'mid360_link', 'front_camera_link'} <= links
+    assert 'rear_camera_link' not in links
     joints = {joint.attrib['name']: joint for joint in root.findall('joint')}
     rpy = [float(value) for value in joints['mid360_joint'].find('origin').attrib['rpy'].split()]
     assert math.isclose(rpy[1], math.radians(45.0), abs_tol=1e-8)

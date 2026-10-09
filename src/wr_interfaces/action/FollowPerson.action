@@ -1,0 +1,22 @@
+# Long-running behavior-tree action. It stops rather than reversing when the
+# person is too close, lost, stationary, or when safety evidence is stale.
+uint32 session_id
+float32 desired_front_gap
+float32 lost_wait_timeout
+float32 search_radius
+bool allow_target_rebind
+---
+uint8 RESULT_STOPPED=0
+uint8 RESULT_CANCELLED=1
+uint8 RESULT_REJECTED=2
+uint8 RESULT_HARDWARE_FAULT=3
+
+bool success
+uint8 result_code
+uint32 final_binding_id
+string message
+---
+uint8 state
+uint32 binding_id
+float32 measured_gap
+string message

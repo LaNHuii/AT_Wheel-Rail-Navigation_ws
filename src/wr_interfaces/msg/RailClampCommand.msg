@@ -2,6 +2,7 @@ uint8 IDLE=0
 uint8 START_PROBE=1
 uint8 CANCEL=2
 uint8 RELEASE=3
+uint8 HOLD=4
 
 uint8 MODULE_FL=1
 uint8 MODULE_FR=2

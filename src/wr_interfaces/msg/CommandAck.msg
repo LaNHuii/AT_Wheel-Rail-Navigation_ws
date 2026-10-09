@@ -1,0 +1,6 @@
+std_msgs/Header header
+uint32 acknowledged_sequence_id
+uint8 message_type
+bool accepted
+uint16 result_code
+uint8 active_module_mask

@@ -14,7 +14,7 @@ def generate_launch_description():
             parameters=[parameters], output='screen'
         ),
         Node(
-            package='wr_chassis_gateway', executable='real_chassis_adapter_stub_node',
+            package='wr_chassis_gateway', executable='real_chassis_adapter_node',
             parameters=[parameters], output='screen'
         ),
     ])
