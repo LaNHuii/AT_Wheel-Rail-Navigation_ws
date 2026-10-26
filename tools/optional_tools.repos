@@ -1,0 +1,5 @@
+repositories:
+  rosbag_sensor_trimmer:
+    type: git
+    url: https://github.com/Aldoubt/rosbag_sensor_trimmer.git
+    version: ebce35c40f620dd46bc00c61132246aadbca0a3a

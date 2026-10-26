@@ -17,6 +17,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImuStatus.msg"
   "msg/TrackedPerson.msg"
   "msg/LocalSafetyState.msg"
+  "msg/TraversabilityState.msg"
+  "msg/SystemHealth.msg"
   "msg/PersonFollowStatus.msg"
   "msg/SwerveState.msg"
   "msg/RailEngagementState.msg"

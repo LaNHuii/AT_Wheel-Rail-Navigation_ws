@@ -1,0 +1,16 @@
+# 真车数据链健康监测参数。超时值应大于对应传感器正常周期并留出通信抖动裕量。
+runtime_monitor:
+  ros__parameters:
+    lidar_timeout: 0.35
+    imu_timeout: 0.15
+    chassis_timeout: 0.25
+    safety_timeout: 0.35
+    localization_timeout: 0.50
+    vision_timeout: 0.35
+    require_lidar: true
+    require_imu: true
+    require_chassis: true
+    require_safety: true
+    require_localization: false
+    require_vision: true
+    publish_rate: 10.0

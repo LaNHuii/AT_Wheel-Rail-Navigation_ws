@@ -10,15 +10,22 @@ import time
 
 import numpy as np
 import rclpy
+from nav_msgs.msg import OccupancyGrid
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2
 from tf2_ros import Buffer, TransformException, TransformListener
-from wr_interfaces.msg import ChassisState, LocalSafetyState, TrackedPerson
+from wr_interfaces.msg import (
+    ChassisState,
+    LocalSafetyState,
+    TrackedPerson,
+    TraversabilityState,
+)
 
-from .safety_geometry import SafetyConfig, evaluate_safety
+from .safety_geometry import SafetyConfig, evaluate_safety, filter_obstacle_points
+from .traversability import TraversabilityConfig, build_local_traversability
 
 
 class LidarSafetyNode(Node):
@@ -42,6 +49,9 @@ class LidarSafetyNode(Node):
         self.declare_parameter('max_points', 60000)
         self.declare_parameter('base_frame', 'base_link')
         self.declare_parameter('bypass_lateral_speed', 0.06)
+        traversability_defaults = TraversabilityConfig()
+        for name in traversability_defaults.__dataclass_fields__:
+            self.declare_parameter(name, getattr(traversability_defaults, name))
         self.config = SafetyConfig(**{
             name: float(self.get_parameter(name).value)
             for name in (
@@ -57,6 +67,11 @@ class LidarSafetyNode(Node):
         self.base_frame = str(self.get_parameter('base_frame').value)
         self.bypass_lateral_speed = float(
             self.get_parameter('bypass_lateral_speed').value)
+        traversability_values = {}
+        for name, field in traversability_defaults.__dataclass_fields__.items():
+            value = self.get_parameter(name).value
+            traversability_values[name] = int(value) if field.type is int else float(value)
+        self.traversability_config = TraversabilityConfig(**traversability_values)
         if self.target_timeout <= 0.0 or self.max_points <= 0 or self.config.minimum_points <= 0:
             raise ValueError('LiDAR safety timeouts, point limits, and counts must be positive')
 
@@ -66,6 +81,10 @@ class LidarSafetyNode(Node):
         self.tf_buffer = Buffer(cache_time=Duration(seconds=5.0))
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.publisher = self.create_publisher(LocalSafetyState, 'local_safety_state', 10)
+        self.traversability_publisher = self.create_publisher(
+            TraversabilityState, 'local_traversability', 10)
+        self.grid_publisher = self.create_publisher(
+            OccupancyGrid, 'local_obstacle_grid', 10)
         self.create_subscription(PointCloud2, 'lidar/points', self.on_cloud, 10)
         self.create_subscription(ChassisState, 'chassis_state', self.on_chassis, 10)
         self.create_subscription(TrackedPerson, 'tracked_person', self.on_target, 10)
@@ -127,7 +146,42 @@ class LidarSafetyNode(Node):
         output.suggested_lateral_velocity = 0.0
         output.reason = reason
         self.publisher.publish(output)
+        traversability = TraversabilityState()
+        traversability.header = output.header
+        traversability.data_fresh = False
+        traversability.preferred_direction = TraversabilityState.DIRECTION_NONE
+        traversability.reason = reason
+        self.traversability_publisher.publish(traversability)
         self.get_logger().warn(f'LiDAR safety rejected cloud: {reason}')
+
+    def publish_traversability(self, header, result):
+        """发布局部通行裕度和只表达障碍证据的滚动栅格。"""
+        output = TraversabilityState()
+        output.header = header
+        output.header.frame_id = self.base_frame
+        output.data_fresh = True
+        output.forward_clearance = float(result.forward_clearance)
+        output.left_clearance = float(result.left_clearance)
+        output.right_clearance = float(result.right_clearance)
+        output.preferred_direction = int(result.preferred_direction)
+        output.obstacle_point_count = int(result.obstacle_point_count)
+        output.reason = 'local obstacle-grid clearance evaluated'
+        self.traversability_publisher.publish(output)
+
+        cfg = self.traversability_config
+        grid = OccupancyGrid()
+        grid.header = output.header
+        grid.info.resolution = float(cfg.grid_resolution)
+        grid.info.width = int(result.occupancy.shape[0])
+        grid.info.height = int(result.occupancy.shape[1])
+        grid.info.origin.position.x = float(cfg.grid_min_x)
+        grid.info.origin.position.y = float(-cfg.grid_half_width)
+        grid.info.origin.orientation.w = 1.0
+        # 这里只发布障碍证据：没有射线清空证据的栅格保持 unknown，避免误报自由空间。
+        data = np.full(result.occupancy.T.shape, -1, dtype=np.int8)
+        data[result.occupancy.T] = 100
+        grid.data = data.reshape(-1).astype(int).tolist()
+        self.grid_publisher.publish(grid)
 
     def on_cloud(self, message):
         try:
@@ -142,6 +196,9 @@ class LidarSafetyNode(Node):
                 and self.target.header.frame_id == self.base_frame):
             target_xy = (float(self.target.position.x), float(self.target.position.y))
         result = evaluate_safety(points, self.mode, self.config, target_xy)
+        obstacle_points = filter_obstacle_points(points, self.config)
+        traversability = build_local_traversability(
+            obstacle_points, self.traversability_config)
         output = LocalSafetyState()
         output.header = message.header
         output.header.frame_id = self.base_frame
@@ -157,6 +214,7 @@ class LidarSafetyNode(Node):
             float(result.bypass_direction) * self.bypass_lateral_speed)
         output.reason = 'point-cloud safety zones evaluated'
         self.publisher.publish(output)
+        self.publish_traversability(message.header, traversability)
 
 
 def main(args=None):

@@ -11,6 +11,8 @@ cmd_vel_arbiter:
   ros__parameters:
     source_timeout: 0.20
     chassis_timeout: 0.25
+    system_health_timeout: 0.40
+    require_system_health: true
     publish_rate: 50.0
 
 real_chassis_adapter:

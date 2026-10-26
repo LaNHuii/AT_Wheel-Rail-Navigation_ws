@@ -26,3 +26,13 @@ lidar_safety:
     minimum_points: 4
     target_timeout: 0.30
     max_points: 60000
+    # 局部栅格只保存机器人周围的障碍证据，不替代全局地图。
+    grid_min_x: -0.60
+    grid_max_x: 2.00
+    grid_half_width: 1.30
+    grid_resolution: 0.10
+    occupied_points_per_cell: 2
+    evaluation_min_x: 0.45
+    evaluation_max_x: 1.55
+    evaluation_corridor_half_width: 0.28
+    evaluation_lateral_offset: 0.62

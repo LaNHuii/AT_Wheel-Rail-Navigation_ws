@@ -14,6 +14,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/u_int8.hpp"
 #include "wr_interfaces/msg/chassis_state.hpp"
+#include "wr_interfaces/msg/system_health.hpp"
 #include "wr_interfaces/srv/set_motion_source.hpp"
 
 namespace wr_chassis_gateway
@@ -27,8 +28,12 @@ public:
   {
     source_timeout_ = declare_parameter("source_timeout", 0.20);
     chassis_timeout_ = declare_parameter("chassis_timeout", 0.25);
+    system_health_timeout_ = declare_parameter("system_health_timeout", 0.40);
+    require_system_health_ = declare_parameter("require_system_health", false);
     const double publish_rate = declare_parameter("publish_rate", 50.0);
-    if (source_timeout_ <= 0.0 || chassis_timeout_ <= 0.0 || publish_rate <= 0.0) {
+    if (source_timeout_ <= 0.0 || chassis_timeout_ <= 0.0 ||
+      system_health_timeout_ <= 0.0 || publish_rate <= 0.0)
+    {
       throw std::invalid_argument("arbiter rates and timeouts must be positive");
     }
     publisher_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel_selected", 10);
@@ -40,6 +45,9 @@ public:
     chassis_subscription_ = create_subscription<wr_interfaces::msg::ChassisState>(
       "chassis_state", 10,
       std::bind(&CmdVelArbiterNode::on_chassis, this, std::placeholders::_1));
+    health_subscription_ = create_subscription<wr_interfaces::msg::SystemHealth>(
+      "system_health", 10,
+      std::bind(&CmdVelArbiterNode::on_health, this, std::placeholders::_1));
     service_ = create_service<wr_interfaces::srv::SetMotionSource>(
       "set_motion_source",
       std::bind(
@@ -105,6 +113,14 @@ private:
     chassis_ = *message;
     chassis_received_at_ = std::chrono::steady_clock::now();
     chassis_received_ = true;
+  }
+
+  void on_health(const wr_interfaces::msg::SystemHealth::SharedPtr message)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    system_health_ready_ = message->autonomy_ready;
+    system_health_received_at_ = std::chrono::steady_clock::now();
+    system_health_received_ = true;
   }
 
   bool source_allowed_for_mode(std::uint8_t source, std::uint8_t mode) const
@@ -197,6 +213,14 @@ private:
     } else if (active_source_ != kNone) {
       chassis_safe = chassis_safe &&
         chassis_.active_control_source == wr_interfaces::msg::ChassisState::SOURCE_AUTONOMOUS;
+      // 真车配置可要求统一健康门控。监测消息缺失、超时或未就绪时，
+      // 自动速度源立即归零；遥控控制仍由 STM32 独立保持最高优先级。
+      if (require_system_health_) {
+        const bool health_fresh = system_health_received_ &&
+          std::chrono::duration<double>(now - system_health_received_at_).count() <=
+          system_health_timeout_;
+        chassis_safe = chassis_safe && health_fresh && system_health_ready_;
+      }
     }
     geometry_msgs::msg::Twist output;
     if (active_source_ != kNone && chassis_safe &&
@@ -217,17 +241,23 @@ private:
 
   double source_timeout_{0.20};
   double chassis_timeout_{0.25};
+  double system_health_timeout_{0.40};
+  bool require_system_health_{false};
+  bool system_health_ready_{false};
+  bool system_health_received_{false};
   std::uint8_t active_source_{kNone};
   std::array<SourceState, 5> sources_;
   std::array<rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr, 5>
     source_subscriptions_{};
   wr_interfaces::msg::ChassisState chassis_;
   std::chrono::steady_clock::time_point chassis_received_at_{};
+  std::chrono::steady_clock::time_point system_health_received_at_{};
   bool chassis_received_{false};
   std::mutex mutex_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr source_publisher_;
   rclcpp::Subscription<wr_interfaces::msg::ChassisState>::SharedPtr chassis_subscription_;
+  rclcpp::Subscription<wr_interfaces::msg::SystemHealth>::SharedPtr health_subscription_;
   rclcpp::Service<SetSource>::SharedPtr service_;
   rclcpp::TimerBase::SharedPtr timer_;
 };

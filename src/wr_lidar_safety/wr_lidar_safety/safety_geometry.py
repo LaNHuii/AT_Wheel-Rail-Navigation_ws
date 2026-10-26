@@ -46,12 +46,12 @@ class SafetyResult:
     bypass_direction: int = 0
 
 
-def evaluate_safety(points, mode, config=None, target_xy=None):
-    """评估 base_link 坐标系下的 XYZ 点，不依赖特定雷达驱动。"""
+def filter_obstacle_points(points, config=None):
+    """清除无效点和车体自身点，保留人员点供紧急停车判断。"""
     cfg = config or SafetyConfig()
     xyz = np.asarray(points, dtype=np.float64)
     if xyz.size == 0:
-        return SafetyResult(False, False, True, math.inf)
+        return np.empty((0, 3), dtype=np.float64)
     xyz = xyz.reshape((-1, 3))
     finite = np.isfinite(xyz).all(axis=1)
     height = (xyz[:, 2] >= cfg.min_obstacle_z) & (xyz[:, 2] <= cfg.max_obstacle_z)
@@ -60,6 +60,13 @@ def evaluate_safety(points, mode, config=None, target_xy=None):
         & (np.abs(xyz[:, 1]) <= cfg.self_half_width)
         & (xyz[:, 2] >= cfg.self_min_z) & (xyz[:, 2] <= cfg.self_max_z))
     xyz = xyz[finite & height & ~inside_self]
+    return xyz
+
+
+def evaluate_safety(points, mode, config=None, target_xy=None):
+    """评估 base_link 坐标系下的 XYZ 点，不依赖特定雷达驱动。"""
+    cfg = config or SafetyConfig()
+    xyz = filter_obstacle_points(points, cfg)
     if xyz.size == 0:
         return SafetyResult(False, False, True, math.inf)
 

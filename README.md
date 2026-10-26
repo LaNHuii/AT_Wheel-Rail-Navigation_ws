@@ -32,11 +32,16 @@ repository and all external reference projects are treated as read-only inputs.
 | `wr_rail_perception` | Point-cloud rail pair detection, entrance pose and traversability estimate |
 | `wr_localization` | Wheel odometry and chassis-IMU local EKF for control and trajectory audit |
 | `wr_task_manager` | BehaviorTree.CPP task sequencing and explicit motion ownership transfer |
+| `wr_runtime_monitor` | Sensor freshness, autonomy readiness and runtime fault summary |
+| `wr_bringup` | Unified real-vehicle launch with health-gated CAN-FD execution |
 | `wr_gazebo` | Gazebo worlds, controller configuration and end-to-end workflow verification |
 
 The RGB-D target producer remains owned by the vision group. Global mapping,
 global route planning and automatic crop-row coverage are intentionally outside
 the first person-following release.
+
+Optional bag preparation tooling, local traversability output and runtime health
+integration are documented in [`docs/reuse_integration.md`](docs/reuse_integration.md).
 
 ## Build
 

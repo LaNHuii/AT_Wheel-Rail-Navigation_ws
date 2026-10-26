@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>wr_bringup</name>
+  <version>0.1.0</version>
+  <description>Unified real-vehicle bringup for the wheel-rail person-following stack.</description>
+  <maintainer email="maintainer@example.com">AT Wheel-Rail Navigation Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>wr_chassis_gateway</exec_depend>
+  <exec_depend>wr_description</exec_depend>
+  <exec_depend>wr_lidar_safety</exec_depend>
+  <exec_depend>wr_localization</exec_depend>
+  <exec_depend>wr_person_following</exec_depend>
+  <exec_depend>wr_rail_controller</exec_depend>
+  <exec_depend>wr_rail_perception</exec_depend>
+  <exec_depend>wr_runtime_monitor</exec_depend>
+  <exec_depend>wr_task_manager</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>
