@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""轨道直行、舍轮回零和夹轨控制的 ROS 2 节点。
+
+几何、速度、转向限位和夹轨参数位于 config/rail_controller.yaml。
+真车电机的最终硬限位、电流限制和故障停机仍由 STM32 执行。
+"""
 
 import math
 
@@ -407,8 +412,8 @@ class RailControllerNode(Node):
                 self.get_logger().info(
                     f'{MODULE_NAMES[index]} clamp contact at '
                     f'{math.degrees(self.positions[index]):.2f} deg')
-                # Real STM32 stops only this module; the upper computer still
-                # decides whether the accumulated evidence means rail engagement.
+                # 真实 STM32 只停止当前接触模块；上位机仍根据累积证据
+                # 判定是否已完成夹轨。
                 self.publish_semantic_command(
                     RailClampCommand.HOLD, 1 << index)
 

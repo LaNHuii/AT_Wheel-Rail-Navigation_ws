@@ -1,3 +1,9 @@
+"""局部障碍物与绕行走廊的纯几何判断。
+
+输入必须是 base_link 坐标系下的点云。几何范围、点数阈值和建议侧向速度
+通过 config/lidar_safety.yaml 调节，不在本文件内硬编码实车标定值。
+"""
+
 from dataclasses import dataclass
 import math
 
@@ -25,6 +31,9 @@ class SafetyConfig:
     rail_block_distance: float = 1.00
     rotation_radius: float = 0.62
     target_exclusion_radius: float = 0.42
+    bypass_offset: float = 0.62
+    bypass_corridor_half_width: float = 0.22
+    bypass_check_distance: float = 1.10
     minimum_points: int = 4
 
 
@@ -34,10 +43,11 @@ class SafetyResult:
     forward_path_blocked: bool
     rotation_safe: bool
     nearest_obstacle_distance: float
+    bypass_direction: int = 0
 
 
 def evaluate_safety(points, mode, config=None, target_xy=None):
-    """Evaluate base_link XYZ points without assuming a particular LiDAR driver."""
+    """评估 base_link 坐标系下的 XYZ 点，不依赖特定雷达驱动。"""
     cfg = config or SafetyConfig()
     xyz = np.asarray(points, dtype=np.float64)
     if xyz.size == 0:
@@ -74,4 +84,16 @@ def evaluate_safety(points, mode, config=None, target_xy=None):
     swept_radius = np.hypot(xyz[:, 0], xyz[:, 1])
     rotation_unsafe = int(np.count_nonzero(
         swept_radius <= cfg.rotation_radius)) >= cfg.minimum_points
-    return SafetyResult(emergency, blocked, not rotation_unsafe, nearest)
+    bypass_direction = 0
+    if mode == FREE_SURFACE and blocked and not emergency:
+        look_ahead = (
+            (clearance >= 0.0) & (clearance <= cfg.bypass_check_distance) & soft_points)
+        left_count = int(np.count_nonzero(
+            look_ahead &
+            (np.abs(xyz[:, 1] - cfg.bypass_offset) <= cfg.bypass_corridor_half_width)))
+        right_count = int(np.count_nonzero(
+            look_ahead &
+            (np.abs(xyz[:, 1] + cfg.bypass_offset) <= cfg.bypass_corridor_half_width)))
+        if min(left_count, right_count) < cfg.minimum_points:
+            bypass_direction = 1 if left_count <= right_count else -1
+    return SafetyResult(emergency, blocked, not rotation_unsafe, nearest, bypass_direction)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收车体从水泥路面向双圆轨入口运动的基本过程。"""
 
 import math
 import sys

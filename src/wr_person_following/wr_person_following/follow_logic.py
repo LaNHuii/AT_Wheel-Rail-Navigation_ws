@@ -1,3 +1,10 @@
+"""人物跟随局部状态机。
+
+该文件只根据已融合的人员目标、底盘模式和安全状态生成底盘速度，
+不负责视觉识别、雷达障碍物提取或电机闭环。
+调车参数集中在 config/person_following.yaml，单位与影响见该配置文件。
+"""
+
 from dataclasses import dataclass
 import math
 
@@ -38,9 +45,12 @@ class FollowConfig:
     search_radius: float = 3.0
     search_angular_speed: float = 0.25
     max_free_vx: float = 0.20
+    max_free_vy: float = 0.08
     max_rail_vx: float = 0.12
+    max_rail_reverse_vx: float = 0.05
     max_wz: float = 0.40
     distance_gain: float = 0.8
+    lateral_gain: float = 0.6
     heading_gain: float = 1.2
     max_heading_for_translation: float = math.radians(25.0)
     allow_target_rebind: bool = True
@@ -57,6 +67,7 @@ class FollowInputs:
     forward_path_blocked: bool = False
     rotation_safe: bool = False
     bypass_active: bool = False
+    suggested_lateral_velocity: float = 0.0
     target_state: int = TARGET_NONE
     target_session_id: int = 0
     binding_id: int = 0
@@ -81,7 +92,7 @@ class FollowOutput:
 
 
 class PersonFollowLogic:
-    """Deterministic local FSM; perception, path planning and motor loops stay external."""
+    """确定性局部状态机；感知、路径规划和电机闭环均在外部完成。"""
 
     def __init__(self, config=None):
         self.config = config or FollowConfig()
@@ -122,15 +133,14 @@ class PersonFollowLogic:
             if not self.config.allow_target_rebind:
                 return False
             if not self.loss_observed:
-                # Never jump to a closer bystander while the current binding is healthy.
+                # 当前绑定仍有效时，不允许因为旁人更近而切换目标。
                 return False
-        if self.lost_since is not None and (
-                not math.isfinite(data.nearest_body_distance)
-                or data.nearest_body_distance > self.config.search_radius):
-            return False
         return True
 
     def _follow(self, data):
+        # 跟随距离基准：轨内使用轨道纵向间距，自由路面使用车头到人体最近表面距离。
+        # 可调：desired_front_gap、gap_deadband、distance_gain，
+        # 位置：config/person_following.yaml。
         on_rail = data.chassis_mode == ON_RAIL
         gap = data.longitudinal_distance if on_rail else data.nearest_body_distance
         if not math.isfinite(gap) or gap <= 0.0:
@@ -144,20 +154,36 @@ class PersonFollowLogic:
         if error > self.config.gap_deadband:
             limit = self.config.max_rail_vx if on_rail else self.config.max_free_vx
             vx = self._clamp(self.config.distance_gain * error, 0.0, limit)
+        elif on_rail and error < -self.config.gap_deadband:
+            vx = self._clamp(
+                self.config.distance_gain * error,
+                -self.config.max_rail_reverse_vx,
+                0.0,
+            )
         if on_rail:
+            # 轨内只输出纵向速度；max_rail_reverse_vx 限制跟人倒车速度。
             return FollowOutput(
                 FOLLOWING, vx=vx, measured_gap=gap, target_valid=True,
-                reason='rail longitudinal following')
+                reason='rail bidirectional longitudinal following')
+        # 自由路面可横移和转向，但人向车辆后退时 vx 保持为零。
+        # 可调：max_free_vy、max_wz、lateral_gain、heading_gain、
+        # max_heading_for_translation，位置：config/person_following.yaml。
         heading = math.atan2(data.lateral_offset, max(data.position_x, 0.05))
+        vy = self._clamp(
+            self.config.lateral_gain * data.lateral_offset,
+            -self.config.max_free_vy,
+            self.config.max_free_vy,
+        )
         wz = self._clamp(
             self.config.heading_gain * heading, -self.config.max_wz, self.config.max_wz)
         if abs(heading) > self.config.max_heading_for_translation:
             vx = 0.0
         return FollowOutput(
-            FOLLOWING, vx=vx, wz=wz, measured_gap=gap, target_valid=True,
+            FOLLOWING, vx=vx, vy=vy, wz=wz, measured_gap=gap, target_valid=True,
             reason='free-surface following')
 
     def update(self, data):
+        # 安全优先级高于跟随：底盘、感知或障碍物条件不满足时只输出停车状态。
         if not self.active:
             return FollowOutput(IDLE, reason='follow action inactive')
         if not data.chassis_ok:
@@ -174,10 +200,31 @@ class PersonFollowLogic:
             self.lost_since = None
             self.search_started_at = None
             self.loss_observed = False
-            if data.emergency_stop or data.forward_path_blocked or data.bypass_active:
+            if data.emergency_stop:
                 return FollowOutput(
                     OBSTACLE_HOLD, measured_gap=data.nearest_body_distance,
-                    target_valid=True, reason='obstacle layer owns stop or bypass')
+                    target_valid=True, reason='hard obstacle stop')
+            if data.chassis_mode == ON_RAIL and data.forward_path_blocked:
+                return FollowOutput(
+                    OBSTACLE_HOLD, measured_gap=data.longitudinal_distance,
+                    target_valid=True, reason='rail obstacle hold')
+            if data.forward_path_blocked:
+                # 第一版只允许自由路面使用雷达给出的有界侧向绕行速度；
+                # 轨内遇障始终停车。绕行速度上限受 max_free_vy 约束。
+                if data.bypass_active and abs(data.suggested_lateral_velocity) > 1.0e-6:
+                    return FollowOutput(
+                        FOLLOWING,
+                        vx=min(0.04, self.config.max_free_vx),
+                        vy=self._clamp(
+                            data.suggested_lateral_velocity,
+                            -self.config.max_free_vy,
+                            self.config.max_free_vy),
+                        measured_gap=data.nearest_body_distance,
+                        target_valid=True,
+                        reason='bounded free-surface lateral bypass')
+                return FollowOutput(
+                    OBSTACLE_HOLD, measured_gap=data.nearest_body_distance,
+                    target_valid=True, reason='no safe local bypass corridor')
             return self._follow(data)
 
         if data.emergency_stop or data.forward_path_blocked:
@@ -187,22 +234,6 @@ class PersonFollowLogic:
             self.loss_observed = True
         if self.lost_since is None:
             self.lost_since = data.now
-        if data.chassis_mode == ON_RAIL:
-            return FollowOutput(
-                WAITING_FOR_TARGET,
-                reason='target lost on rail; no rotation, lateral motion, or retreat')
-
-        if data.now - self.lost_since < self.config.lost_wait_timeout:
-            return FollowOutput(LOST_WAIT, reason='waiting before free-surface search')
-        if not data.rotation_safe:
-            return FollowOutput(
-                WAITING_FOR_TARGET, reason='full-footprint rotation is not verified safe')
-        if self.search_started_at is None:
-            self.search_started_at = data.now
-        search_duration = 2.0 * math.pi / self.config.search_angular_speed
-        if data.now - self.search_started_at < search_duration:
-            return FollowOutput(
-                SEARCHING, wz=self.config.search_angular_speed,
-                reason='one bounded free-surface search turn')
         return FollowOutput(
-            WAITING_FOR_TARGET, reason='search turn complete; waiting for a valid binding')
+            WAITING_FOR_TARGET,
+            reason='target unavailable; first release holds position without active search')

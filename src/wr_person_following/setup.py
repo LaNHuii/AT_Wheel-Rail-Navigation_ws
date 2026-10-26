@@ -1,3 +1,5 @@
+"""wr_person_following ROS 2 Python 包的安装与资源声明。"""
+
 from glob import glob
 import os
 

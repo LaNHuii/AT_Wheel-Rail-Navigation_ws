@@ -1,3 +1,5 @@
+"""启动 robot_state_publisher 和 RViz，用于检查车体模型、关节和传感器坐标系。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

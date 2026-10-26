@@ -1,3 +1,5 @@
+"""启动带 U 形端部近似碰撞体的轨道入口仿真。"""
+
 import os
 import sys
 

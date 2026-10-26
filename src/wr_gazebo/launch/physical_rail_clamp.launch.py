@@ -1,3 +1,5 @@
+"""启动物理轨道夹轨仿真，并将关节命令权交给轨道控制器。"""
+
 import os
 import sys
 
@@ -11,8 +13,8 @@ from rail_simulation import generate_rail_launch
 
 def generate_launch_description():
     description = generate_rail_launch('physical_double_rail.world', spawn_x=0.0)
-    # generate_rail_launch appends the free-surface swerve controller last.
-    # Rail clamp tests replace it, so only one node owns the joint command topics.
+    # generate_rail_launch 最后会加入自由路面舍轮控制器。
+    # 夹轨测试需替换它，以保证只有一个节点拥有关节命令话题。
     description.entities.pop()
     parameters = os.path.join(
         get_package_share_directory('wr_rail_controller'), 'config', 'rail_controller_sim.yaml')

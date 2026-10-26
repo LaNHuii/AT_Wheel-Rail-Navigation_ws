@@ -2,6 +2,10 @@
 
 Date: 2026-09-24
 
+> Historical test condition: this acceptance run used the original 45-degree
+> MID-360S model. The active robot model was changed to 20 degrees on
+> 2026-10-15 and requires a new perception/extrinsic acceptance run.
+
 ## Implemented scope
 
 - MID-360S frame pitched 45 degrees forward/downward.

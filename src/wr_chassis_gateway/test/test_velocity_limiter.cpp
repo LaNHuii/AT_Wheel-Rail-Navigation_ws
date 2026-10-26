@@ -1,3 +1,4 @@
+// 测试用途：验证速度限幅、加速度约束以及轨内禁止横移。
 #include <cmath>
 #include <limits>
 #include <stdexcept>

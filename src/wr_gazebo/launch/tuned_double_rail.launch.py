@@ -1,3 +1,5 @@
+"""启动已调整接触参数的双轨仿真场景。"""
+
 import os
 import xml.etree.ElementTree as ET
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收夹轨释放、向前离轨和自由路面模式恢复。"""
 
 import math
 import sys

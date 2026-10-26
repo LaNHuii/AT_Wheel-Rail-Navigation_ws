@@ -1,3 +1,5 @@
+"""wr_lidar_safety ROS 2 Python 包的安装与资源声明。"""
+
 from glob import glob
 import os
 

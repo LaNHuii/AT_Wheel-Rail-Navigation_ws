@@ -1,7 +1,9 @@
+# MID-360S 局部安全配置。距离单位为 m，速度单位为 m/s。
+# 实车调参顺序：先校验 TF 外参，再校验自身排除框，最后调停车与绕行阈值。
 lidar_safety:
   ros__parameters:
     base_frame: base_link
-    # base_link is provisionally 0.253 m above the ground plane.
+    # base_link 目前暂定高于地面 0.253 m，换车体模型或载荷后需重新核对。
     min_obstacle_z: -0.22
     max_obstacle_z: 1.50
     robot_front_x: 0.45
@@ -17,6 +19,10 @@ lidar_safety:
     rail_block_distance: 1.00
     rotation_radius: 0.62
     target_exclusion_radius: 0.42
+    bypass_offset: 0.62
+    bypass_corridor_half_width: 0.22
+    bypass_check_distance: 1.10
+    bypass_lateral_speed: 0.06
     minimum_points: 4
     target_timeout: 0.30
     max_points: 60000

@@ -1,3 +1,5 @@
+"""构建可复用的轮轨 Gazebo 启动描述，统一加载模型、场景和控制器。"""
+
 import os
 import xml.etree.ElementTree as ET
 

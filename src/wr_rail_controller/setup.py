@@ -1,3 +1,5 @@
+"""wr_rail_controller ROS 2 Python 包的安装与资源声明。"""
+
 from setuptools import find_packages, setup
 
 
@@ -25,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'rail_controller_node = wr_rail_controller.rail_controller_node:main',
+            'rail_transition_node = wr_rail_controller.rail_transition_node:main',
         ],
     },
 )

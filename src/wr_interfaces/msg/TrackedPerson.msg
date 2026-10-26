@@ -9,8 +9,8 @@ uint8 MOVING=1
 uint8 STATIONARY=2
 uint8 DEPOSITING=3
 
-# The visual pipeline owns identity association. binding_id changes whenever a
-# replacement person is accepted; tracker_id may change without rebinding.
+# 人员身份关联由视觉流水线负责。
+# 只有当上层接受替代人员时 binding_id 才改变；tracker_id 可在不重新绑定时变化。
 std_msgs/Header header
 uint32 session_id
 uint32 binding_id

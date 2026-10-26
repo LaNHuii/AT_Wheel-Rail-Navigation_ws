@@ -1,3 +1,5 @@
+"""启动不写入真实 CAN 总线的底盘网关检查模式。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

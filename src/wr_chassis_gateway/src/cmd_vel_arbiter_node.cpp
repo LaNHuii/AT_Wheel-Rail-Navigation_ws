@@ -1,3 +1,7 @@
+// 文件用途：仲裁人物跟随、自由路面导航、轨道过渡和遥控速度源。
+// 仲裁器不代替 STM32 安全保护；底盘未授权、状态超时、急停或故障时只输出零速度。
+// 可调参数 source_timeout、chassis_timeout 和 publish_rate 位于底盘网关配置或 launch 文件。
+
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -83,6 +87,21 @@ private:
   void on_chassis(const wr_interfaces::msg::ChassisState::SharedPtr message)
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    const bool autonomous_was_active =
+      active_source_ == kPersonFollow || active_source_ == kFreeNavigation ||
+      active_source_ == kRailTransition;
+    const bool autonomy_interrupted =
+      message->active_control_source != wr_interfaces::msg::ChassisState::SOURCE_AUTONOMOUS ||
+      message->physical_estop || message->chassis_fault_bits;
+    // 遥控接管的优先级高于上位机。一旦 STM32 不再报告 AUTONOMOUS，
+    // 立即清空当前自动速度源，遥控释放后也不会恢复旧指令。
+    if (autonomous_was_active && autonomy_interrupted) {
+      active_source_ = kNone;
+      publisher_->publish(geometry_msgs::msg::Twist{});
+      RCLCPP_WARN(
+        get_logger(),
+        "Autonomous motion source cleared after manual takeover, estop, or chassis fault");
+    }
     chassis_ = *message;
     chassis_received_at_ = std::chrono::steady_clock::now();
     chassis_received_ = true;
@@ -107,6 +126,17 @@ private:
     return false;
   }
 
+  bool source_request_allowed_for_mode(std::uint8_t source, std::uint8_t mode) const
+  {
+    if (source == kRailTransition) {
+      return mode == wr_interfaces::msg::ChassisState::MODE_FREE_SURFACE ||
+             mode == wr_interfaces::msg::ChassisState::MODE_RAIL_ENTRY ||
+             mode == wr_interfaces::msg::ChassisState::MODE_ON_RAIL ||
+             mode == wr_interfaces::msg::ChassisState::MODE_RAIL_EXIT;
+    }
+    return source_allowed_for_mode(source, mode);
+  }
+
   void on_set_source(
     const std::shared_ptr<SetSource::Request> request,
     std::shared_ptr<SetSource::Response> response)
@@ -119,13 +149,31 @@ private:
       return;
     }
     if (request->requested_source != kNone &&
-      (!chassis_received_ || !source_allowed_for_mode(request->requested_source, chassis_.active_mode)))
+      (!chassis_received_ ||
+      !source_request_allowed_for_mode(request->requested_source, chassis_.active_mode)))
     {
       response->accepted = false;
       response->active_source = active_source_;
       response->message = "source is not allowed in the current chassis mode";
       return;
     }
+    if (request->requested_source == kManual &&
+      chassis_.active_control_source != wr_interfaces::msg::ChassisState::SOURCE_MANUAL)
+    {
+      response->accepted = false;
+      response->active_source = active_source_;
+      response->message = "STM32 has not granted manual control";
+      return;
+    }
+    if (request->requested_source != kNone && request->requested_source != kManual &&
+      chassis_.active_control_source != wr_interfaces::msg::ChassisState::SOURCE_AUTONOMOUS)
+    {
+      response->accepted = false;
+      response->active_source = active_source_;
+      response->message = "STM32 has not granted autonomous control";
+      return;
+    }
+    // 任何速度源交接都先插入一帧零速度，避免上一个控制器的指令泄漏。
     active_source_ = request->requested_source;
     publisher_->publish(geometry_msgs::msg::Twist{});
     response->accepted = true;
@@ -135,6 +183,8 @@ private:
 
   void on_timer()
   {
+    // source_timeout 约束速度指令新鲜度，chassis_timeout 约束 STM32 状态新鲜度。
+    // 任一超时均不保持上次速度，而是输出默认零速度。
     std::lock_guard<std::mutex> lock(mutex_);
     const auto now = std::chrono::steady_clock::now();
     bool chassis_safe = chassis_received_ &&

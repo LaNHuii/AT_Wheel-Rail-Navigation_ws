@@ -1,3 +1,5 @@
+// 文件用途：对上位机底盘速度执行限幅、加速度限制与模式约束。
+// 轨内横移和角速度必须被置零；各限制值通过 chassis_gateway.yaml 调整。
 #pragma once
 
 #include <array>

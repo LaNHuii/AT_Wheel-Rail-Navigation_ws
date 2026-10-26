@@ -1,3 +1,4 @@
+# 真车 CAN 底盘网关参数。启用写入前必须确认接口名、波特率和 STM32 协议版本。
 cmd_vel_guard:
   ros__parameters:
     max_vx: 0.45
@@ -21,7 +22,7 @@ real_chassis_adapter:
     receive_rate: 500.0
     time_sync_rate: 1.0
     valid_for_ms: 200
-    # Independent adapter watchdog. It must expire even if cmd_vel_guard exits.
+    # 适配器独立看门狗；即使 cmd_vel_guard 退出，它也必须能自行超时停车。
     upstream_command_timeout: 0.25
     module_state_timeout: 0.20
     imu_frame_id: imu_link

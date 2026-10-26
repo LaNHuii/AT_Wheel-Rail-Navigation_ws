@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收车体、内侧滚动圆柱和双轨的静态尺寸与位姿。"""
 
 import math
 import sys

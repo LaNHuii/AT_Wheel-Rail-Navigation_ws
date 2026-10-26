@@ -36,7 +36,7 @@
       <geometry><mesh filename="package://wr_description/meshes/base_link.stl"/></geometry>
       <material name="chassis_grey"/>
     </visual>
-    <!-- Convex primitives are used for stable simulation; the detailed STL remains visual-only. -->
+    <!-- 凸基本几何体用于稳定物理仿真；高精度 STL 仅用于外观显示。 -->
     <collision>
       <origin xyz="0 0 0.17" rpy="0 0 0"/>
       <geometry><box size="0.70 0.70 0.16"/></geometry>
@@ -154,7 +154,7 @@
     wheel_ixx="0.00461473" wheel_ixy="0.00000094" wheel_ixz="0.00001332"
     wheel_iyy="0.00458059" wheel_iyz="0.00000388" wheel_izz="0.00710833"/>
 
-  <!-- Provisional sensor frames. Measure and replace these xyz/rpy values on the real chassis. -->
+  <!-- 传感器坐标系暂定值；实车安装后必须测量并替换 xyz/rpy。 -->
   <link name="imu_link"/>
   <joint name="imu_joint" type="fixed">
     <parent link="base_link"/><child link="imu_link"/>
@@ -166,7 +166,7 @@
   </link>
   <joint name="mid360_joint" type="fixed">
     <parent link="base_link"/><child link="mid360_link"/>
-    <origin xyz="0 0 0.46" rpy="0 0.785398163 0"/>
+    <origin xyz="0 0 0.46" rpy="0 0.349065850 0"/>
   </joint>
 
   <link name="front_camera_link"/>

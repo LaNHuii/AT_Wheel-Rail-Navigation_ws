@@ -1,14 +1,12 @@
-import math
+"""验证自由路面/轨内跟随、目标绑定、障碍停车和超时安全行为。"""
 
 from wr_person_following.follow_logic import (
     ACTIVITY_DEPOSITING,
     FOLLOWING,
     FREE_SURFACE,
     HARDWARE_HOLD,
-    LOST_WAIT,
     OBSTACLE_HOLD,
     ON_RAIL,
-    SEARCHING,
     SENSOR_HOLD,
     TARGET_SENSOR_FAULT,
     TARGET_STATIONARY,
@@ -39,7 +37,7 @@ def test_free_surface_following_rotates_toward_person_and_moves_forward():
     data.lateral_offset = 0.2
     output = logic.update(data)
     assert output.state == FOLLOWING
-    assert output.vx > 0.0 and output.wz > 0.0 and output.vy == 0.0
+    assert output.vx > 0.0 and output.wz > 0.0 and output.vy > 0.0
 
 
 def test_rail_following_is_longitudinal_only():
@@ -49,6 +47,15 @@ def test_rail_following_is_longitudinal_only():
     output = logic.update(data)
     assert output.state == FOLLOWING
     assert output.vx > 0.0 and output.vy == 0.0 and output.wz == 0.0
+
+
+def test_rail_following_reverses_slowly_when_person_moves_too_close():
+    logic = started()
+    data = ready(mode=ON_RAIL)
+    data.longitudinal_distance = 0.10
+    output = logic.update(data)
+    assert -logic.config.max_rail_reverse_vx <= output.vx < 0.0
+    assert output.vy == 0.0 and output.wz == 0.0
 
 
 def test_stationary_or_depositing_target_forces_stop():
@@ -70,39 +77,27 @@ def test_rail_target_loss_waits_without_search_or_retreat():
     assert (output.vx, output.vy, output.wz) == (0.0, 0.0, 0.0)
 
 
-def test_free_surface_loss_waits_30_seconds_then_searches_once():
+def test_target_loss_holds_position_without_active_search():
     logic = started()
     logic.update(ready(now=0.0))
     lost = ready(now=1.0)
     lost.target_state = 0
-    assert logic.update(lost).state == LOST_WAIT
-    lost.now = 31.1
     output = logic.update(lost)
-    assert output.state == SEARCHING and output.wz > 0.0
-    lost.now += 2.0 * math.pi / logic.config.search_angular_speed + 0.1
-    assert logic.update(lost).state == WAITING_FOR_TARGET
+    assert output.state == WAITING_FOR_TARGET
+    assert (output.vx, output.vy, output.wz) == (0.0, 0.0, 0.0)
 
 
-def test_new_binding_is_only_accepted_after_loss_and_within_search_radius():
+def test_new_binding_cannot_steal_a_healthy_task():
     logic = started()
     assert logic.update(ready()).state == FOLLOWING
     replacement = ready(now=1.0)
     replacement.binding_id = 12
-    assert logic.update(replacement).state == LOST_WAIT
-    # A changed tracker/binding alone cannot steal a healthy task. Vision must
-    # first report an explicit loss/uncertain interval.
+    assert logic.update(replacement).state == WAITING_FOR_TARGET
+    # 仅 tracker/binding 变化不能抢走正在健康执行的任务；
+    # 视觉必须先明确报告丢失或身份不确定区间。
     replacement.now = 2.0
-    assert logic.update(replacement).state == LOST_WAIT
-    lost = ready(now=2.1)
-    lost.target_state = 0
-    assert logic.update(lost).state == LOST_WAIT
-    replacement.now = 3.0
-    replacement.nearest_body_distance = 3.1
-    assert logic.update(replacement).state == LOST_WAIT
-    replacement.now = 4.0
-    replacement.nearest_body_distance = 2.0
-    assert logic.update(replacement).state == FOLLOWING
-    assert logic.bound_binding_id == 12
+    assert logic.update(replacement).state == WAITING_FOR_TARGET
+    assert logic.bound_binding_id == 11
 
 
 def test_obstacle_and_stale_evidence_force_zero_command():
@@ -119,6 +114,18 @@ def test_obstacle_and_stale_evidence_force_zero_command():
     stale.chassis_ok = True
     stale.target_state = TARGET_SENSOR_FAULT
     assert logic.update(stale).state == SENSOR_HOLD
+
+
+def test_free_surface_uses_lidar_lateral_bypass_only_when_available():
+    logic = started()
+    data = ready()
+    data.forward_path_blocked = True
+    data.bypass_active = True
+    data.suggested_lateral_velocity = 0.06
+    output = logic.update(data)
+    assert output.state == FOLLOWING
+    assert output.vx > 0.0
+    assert output.vy == 0.06
 
 
 def test_too_close_never_commands_blind_reverse():

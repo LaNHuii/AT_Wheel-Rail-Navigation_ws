@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收前轮、后轮和四轮终验的分阶段进轨流程。"""
 
 import math
 import sys

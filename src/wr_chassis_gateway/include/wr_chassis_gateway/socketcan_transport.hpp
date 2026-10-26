@@ -1,3 +1,5 @@
+// 文件用途：封装 Linux SocketCAN 打开、收发和错误处理。
+// 实车 CAN 接口名、速率与重连策略由底盘网关配置和系统 CAN 设置确定。
 #pragma once
 
 #include <string>

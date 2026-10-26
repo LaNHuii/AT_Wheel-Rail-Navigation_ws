@@ -11,7 +11,7 @@
 6. Unknown calibration values live in YAML/Xacro parameters.
 7. Entry and exit use backend-independent transition policies; simulation
    ground truth and future perception are interchangeable observation sources.
-8. Rail entry is fixed-front only: the 45-degree forward MID-360S and front RGB-D
+8. Rail entry is fixed-front only: the 20-degree forward MID-360S and front RGB-D
    camera observe the entrance; the carrier turns around first when necessary.
 9. The behavior tree owns mission sequencing; bounded local state machines own
    rail entry, exit and clamp execution. Only the chassis gateway accesses CAN.
@@ -22,7 +22,7 @@
 
 ```text
 RGB-D target ──> FollowPerson action / local follow FSM ──> /cmd_vel_follow
-MID-360S ─────> local safety + obstacle map ──────────────> Nav2 bypass (later)
+MID-360S ─────> local safety + bounded gap bypass ─────────> follow FSM
 rail detector ─> ExecuteRailTransition / local FSM ───────> /cmd_vel_transition
                                       │
                      behavior tree selects one motion source
@@ -39,8 +39,9 @@ select the next crop row. Track records are an audit aid and never imply that a
 row was harvested merely because the chassis traversed it.
 
 Perception and localization publish stable outputs independently of their
-backends. This permits replacing FAST-LIO2, the rail detector, camera assistance,
-or the final chassis protocol without changing mission logic.
+backends. The first release uses local wheel/IMU odometry for short-term control
+and trajectory audit; global SLAM and global route planning are deferred because
+the worker, rather than a coverage planner, selects the next row.
 
 ## Coordinate convention
 
@@ -57,7 +58,7 @@ or the final chassis protocol without changing mission logic.
 - Effective ground tyre rolling radius.
 - Effective inner rail-roller rolling radius.
 - Measured MID-360S, chassis IMU and front RGB-D camera extrinsics (MID-360S pitch is
-  fixed at 45 degrees).
+  nominally fixed at 20 degrees and must be measured after installation).
 - Motor-side gear ratios and sign conventions.
 - Steering torque bias, contact thresholds and temperature dependence.
 - Maximum admissible entry lateral and heading errors.

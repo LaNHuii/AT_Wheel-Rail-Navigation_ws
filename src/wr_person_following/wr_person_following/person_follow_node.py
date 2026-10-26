@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""人物跟随 ROS 2 Action 节点。
+
+节点将视觉人员观测、MID-360S 安全状态和底盘状态交给局部状态机，
+并在 /cmd_vel_follow 输出候选速度。最终控制权由速度仲裁器和 STM32 决定。
+调车参数位于 config/person_following.yaml。
+"""
 
 import math
 import threading
@@ -17,10 +23,12 @@ from .follow_logic import FollowConfig, FollowInputs, PersonFollowLogic
 
 
 class PersonFollowNode(Node):
-    """Behavior-tree action endpoint backed by a bounded local follow FSM."""
+    """由有界局部跟随状态机支持的行为树 Action 端点。"""
 
     def __init__(self):
         super().__init__('person_follow_controller')
+        # 跟随距离、速度上限、控制增益和数据超时均由 YAML 覆盖。
+        # 调参时优先修改 config/person_following.yaml，不要在此处更改默认值。
         defaults = FollowConfig()
         self.declare_parameter('desired_front_gap', defaults.desired_gap)
         self.declare_parameter('gap_deadband', defaults.gap_deadband)
@@ -28,9 +36,12 @@ class PersonFollowNode(Node):
         self.declare_parameter('search_radius', defaults.search_radius)
         self.declare_parameter('search_angular_speed', defaults.search_angular_speed)
         self.declare_parameter('max_free_vx', defaults.max_free_vx)
+        self.declare_parameter('max_free_vy', defaults.max_free_vy)
         self.declare_parameter('max_rail_vx', defaults.max_rail_vx)
+        self.declare_parameter('max_rail_reverse_vx', defaults.max_rail_reverse_vx)
         self.declare_parameter('max_wz', defaults.max_wz)
         self.declare_parameter('distance_gain', defaults.distance_gain)
+        self.declare_parameter('lateral_gain', defaults.lateral_gain)
         self.declare_parameter('heading_gain', defaults.heading_gain)
         self.declare_parameter(
             'max_heading_for_translation', defaults.max_heading_for_translation)
@@ -46,9 +57,13 @@ class PersonFollowNode(Node):
             search_radius=float(self.get_parameter('search_radius').value),
             search_angular_speed=float(self.get_parameter('search_angular_speed').value),
             max_free_vx=float(self.get_parameter('max_free_vx').value),
+            max_free_vy=float(self.get_parameter('max_free_vy').value),
             max_rail_vx=float(self.get_parameter('max_rail_vx').value),
+            max_rail_reverse_vx=float(
+                self.get_parameter('max_rail_reverse_vx').value),
             max_wz=float(self.get_parameter('max_wz').value),
             distance_gain=float(self.get_parameter('distance_gain').value),
+            lateral_gain=float(self.get_parameter('lateral_gain').value),
             heading_gain=float(self.get_parameter('heading_gain').value),
             max_heading_for_translation=float(
                 self.get_parameter('max_heading_for_translation').value),
@@ -61,7 +76,8 @@ class PersonFollowNode(Node):
             self.base_config.desired_gap, self.base_config.gap_deadband,
             self.base_config.lost_wait_timeout, self.base_config.search_radius,
             self.base_config.search_angular_speed, self.base_config.max_free_vx,
-            self.base_config.max_rail_vx, self.base_config.max_wz,
+            self.base_config.max_free_vy, self.base_config.max_rail_vx,
+            self.base_config.max_rail_reverse_vx, self.base_config.max_wz,
             self.target_timeout, self.safety_timeout, self.chassis_timeout, control_rate)
         if not all(math.isfinite(value) and value > 0.0 for value in positive):
             raise ValueError('person-following distances, speeds, rates, and timeouts must be positive')
@@ -178,6 +194,8 @@ class PersonFollowNode(Node):
         return result
 
     def current_inputs(self, now):
+        # 三类输入分别超时。target_timeout、safety_timeout 和 chassis_timeout
+        # 过小会导致频繁停车，过大会延迟故障停车，均在跟随 YAML 中调整。
         target_fresh = self.target is not None and now - self.target_received_at <= self.target_timeout
         safety_fresh = (
             self.safety is not None and now - self.safety_received_at <= self.safety_timeout
@@ -194,14 +212,16 @@ class PersonFollowNode(Node):
             safety_fresh=bool(safety_fresh),
         )
         if not target_fresh:
-            # A silent/stale camera is a sensor fault, not a person-loss event.
-            # Therefore it must never start the 30 s search timer.
+            # 相机无数据或数据过期属于传感器故障，不是人员丢失，
+            # 因此不得由此启动人员丢失等待计时。
             data.target_state = TrackedPerson.SENSOR_FAULT
         if safety_fresh:
             data.emergency_stop = bool(self.safety.emergency_stop)
             data.forward_path_blocked = bool(self.safety.forward_path_blocked)
             data.rotation_safe = bool(self.safety.rotation_safe)
             data.bypass_active = bool(self.safety.bypass_active)
+            data.suggested_lateral_velocity = float(
+                self.safety.suggested_lateral_velocity)
         if target_fresh:
             data.target_state = int(self.target.tracking_state)
             data.target_session_id = int(self.target.session_id)
@@ -259,8 +279,12 @@ def main(args=None):
     executor.add_node(node)
     try:
         executor.spin()
+    except KeyboardInterrupt:
+        pass
     finally:
-        node.publish_zero()
+        if rclpy.ok():
+            node.publish_zero()
         executor.shutdown()
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()

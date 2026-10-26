@@ -1,3 +1,6 @@
+// 文件用途：将底盘 Twist 解算为四个舍轮的转向角和驱动速度。
+// 轮距、轴距、轮半径、方向符号和转向限位位于 config/mock_controllers.yaml。
+// 实车中 STM32 可保留高频电机闭环，上位机与下位机之间通过通用底盘协议适配。
 #include <array>
 #include <chrono>
 #include <cmath>

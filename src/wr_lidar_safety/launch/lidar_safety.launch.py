@@ -1,3 +1,5 @@
+"""启动 MID-360S 点云安全节点并加载安全几何参数。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

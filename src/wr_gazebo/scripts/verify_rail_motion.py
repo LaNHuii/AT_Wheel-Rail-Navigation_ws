@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收轨内直行、低速倒车和禁止横移的运动约束。"""
 
 import math
 import sys

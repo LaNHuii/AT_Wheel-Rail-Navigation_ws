@@ -1,3 +1,4 @@
+// 文件用途：实现自由路面、轨内和过渡模式的速度安全约束。
 #include "wr_chassis_gateway/velocity_limiter.hpp"
 
 #include <algorithm>

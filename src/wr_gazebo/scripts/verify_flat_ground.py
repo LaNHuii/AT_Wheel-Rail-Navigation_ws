@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收平地上的舍轮前进、横移、旋转和停车行为。"""
 
 import math
 import sys

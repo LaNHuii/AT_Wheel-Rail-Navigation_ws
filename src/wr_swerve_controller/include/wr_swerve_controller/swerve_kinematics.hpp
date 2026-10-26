@@ -1,3 +1,4 @@
+// 文件用途：定义四舍轮逆运动学的几何参数、模块状态和解算接口。
 #pragma once
 
 #include <array>

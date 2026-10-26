@@ -1,3 +1,5 @@
+// 文件用途：实现底盘 CAN-FD 命令和状态帧的严格编解码。
+// 本层只处理协议字节，不在此处实现任务状态机或电机保护。
 #include "wr_chassis_gateway/can_protocol.hpp"
 
 #include <cstring>

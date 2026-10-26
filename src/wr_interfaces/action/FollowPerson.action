@@ -1,5 +1,6 @@
-# Long-running behavior-tree action. It stops rather than reversing when the
-# person is too close, lost, stationary, or when safety evidence is stale.
+# 行为树长时间运行的人物跟随 Action。
+# 人距离过近时，自由路面不跟随倒车；轨内允许使用单独限幅的倒车速度。
+# 目标丢失、目标静止或安全证据过期时，底盘始终停车。
 uint32 session_id
 float32 desired_front_gap
 float32 lost_wait_timeout

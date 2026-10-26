@@ -1,0 +1,18 @@
+<!--
+  顶层人物跟随行为树。过渡请求优先于普通跟随，两条分支都必须持续满足自动控制授权。
+  进轨、夹轨和离轨的严格顺序由 wr_rail_controller 局部状态机负责。
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveSequence>
+      <AutonomyEnabled/>
+      <ReactiveFallback>
+        <Sequence>
+          <TransitionRequested/>
+          <RunRailTransition/>
+        </Sequence>
+        <RunPersonFollow/>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+</root>

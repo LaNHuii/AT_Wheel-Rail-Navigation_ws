@@ -1,14 +1,19 @@
+# 人物跟随调车参数。距离单位为 m，线速度单位为 m/s，角速度单位为 rad/s。
+# desired_front_gap 是车体最前端到人体最近表面的目标间隔，不是传感器到人的距离。
 person_follow_controller:
   ros__parameters:
     desired_front_gap: 0.30
     gap_deadband: 0.05
-    lost_wait_timeout: 30.0
+    lost_wait_timeout: 60.0
     search_radius: 3.0
     search_angular_speed: 0.25
     max_free_vx: 0.20
+    max_free_vy: 0.08
     max_rail_vx: 0.12
+    max_rail_reverse_vx: 0.05
     max_wz: 0.40
     distance_gain: 0.80
+    lateral_gain: 0.60
     heading_gain: 1.20
     max_heading_for_translation: 0.436332
     target_timeout: 0.30

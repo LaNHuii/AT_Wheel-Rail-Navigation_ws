@@ -19,7 +19,7 @@
       <collision name="rail_collision"><geometry><cylinder><radius>0.025</radius><length>5.0</length></cylinder></geometry><surface><friction><ode><mu>0.60</mu><mu2>20.0</mu2><fdir1>0 0 1</fdir1></ode></friction></surface></collision>
       <visual name="rail_visual"><geometry><cylinder><radius>0.025</radius><length>5.0</length></cylinder></geometry><material><ambient>0.28 0.30 0.32 1</ambient><diffuse>0.45 0.48 0.52 1</diffuse></material></visual>
     </link></model>
-    <!-- The photograph shows the two rails closed by the same pipe at the entrance. A straight cross-pipe is the conservative collision approximation; rounded U corners remain visual/mechanical refinement work. -->
+    <!-- 实物图片中两根轨道在入口由同一根管道闭合。直横管是偏保守的碰撞近似，圆角 U 形端部留待后续视觉和机械精化。 -->
     <model name="u_end_cross_pipe"><static>true</static><pose>-1.0 0 0.025 1.57079632679 0 0</pose><link name="rail_link">
       <collision name="rail_collision"><geometry><cylinder><radius>0.025</radius><length>0.60</length></cylinder></geometry><surface><friction><ode><mu>0.60</mu><mu2>20.0</mu2><fdir1>0 0 1</fdir1></ode></friction></surface></collision>
       <visual name="rail_visual"><geometry><cylinder><radius>0.025</radius><length>0.60</length></cylinder></geometry><material><ambient>0.28 0.30 0.32 1</ambient><diffuse>0.45 0.48 0.52 1</diffuse></material></visual>

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收轨道入口对准与进轨的闭环控制。"""
 
 import math
 import sys

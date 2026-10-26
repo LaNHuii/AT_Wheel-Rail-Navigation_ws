@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收夹轨探测、单轮接触停止和失败保护。"""
 
 import math
 import sys

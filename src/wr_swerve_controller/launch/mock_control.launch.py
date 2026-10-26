@@ -1,3 +1,5 @@
+"""启动舍轮解算与 mock ros2_control 控制器，用于无真车时的接口检查。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

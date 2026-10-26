@@ -1,3 +1,5 @@
+"""启动分阶段夹轨与自然进轨仿真。"""
+
 import os
 import sys
 
@@ -11,8 +13,8 @@ from rail_simulation import generate_rail_launch
 
 def generate_launch_description():
     description = generate_rail_launch('u_rail_entry.world', spawn_x=-1.8)
-    # Replace the free-surface controller: the staged supervisor owns the joints
-    # while entering. The same velocity topic remains behind cmd_vel_guard.
+    # 替换自由路面控制器：分阶段上轨监督器在进轨期间拥有关节命令权。
+    # 速度话题仍位于 cmd_vel_guard 安全约束之后。
     description.entities.pop()
     parameters = os.path.join(
         get_package_share_directory('wr_rail_controller'),

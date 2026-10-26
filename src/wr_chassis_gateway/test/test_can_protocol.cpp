@@ -1,3 +1,4 @@
+// 测试用途：验证 CAN-FD 编解码、数值缩放和异常帧拒绝。
 #include <cmath>
 #include <cstdint>
 #include <cstring>

@@ -1,3 +1,4 @@
+# 仿真 ros2_control 控制器配置。转向关节限位仍由 URDF 和控制节点双重约束。
 controller_manager:
   ros__parameters:
     update_rate: 100

@@ -1,3 +1,4 @@
+// 文件用途：实现底盘网关的 SocketCAN 传输层。
 #include "wr_chassis_gateway/socketcan_transport.hpp"
 
 #include <algorithm>

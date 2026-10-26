@@ -1,3 +1,5 @@
+"""启动静态双轨几何场景，用于模型和尺寸可视化检查。"""
+
 import os
 import xml.etree.ElementTree as ET
 

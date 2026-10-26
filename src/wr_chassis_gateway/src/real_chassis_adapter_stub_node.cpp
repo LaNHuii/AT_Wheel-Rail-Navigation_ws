@@ -1,3 +1,5 @@
+// 文件用途：真车底盘适配器，连接 ROS 2 结构化接口与 CAN-FD 协议。
+// dry-run 只验证上位机数据链；实车启用前必须核对 CAN 帧、缩放系数、时间戳和故障处理。
 #include <array>
 #include <chrono>
 #include <cmath>

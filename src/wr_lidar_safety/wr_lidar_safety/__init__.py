@@ -1,1 +1,1 @@
-"""MID-360S point-cloud safety layer."""
+"""MID-360S 点云局部安全层。"""

@@ -1,3 +1,4 @@
+// 测试用途：验证舍轮前进、横移、旋转、回零和转向限位解算。
 #include <cmath>
 #include <stdexcept>
 

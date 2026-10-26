@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收分阶段进轨监督器与 Gazebo 关节控制的集成。"""
 
 import sys
 import time

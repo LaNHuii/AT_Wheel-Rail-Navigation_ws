@@ -16,8 +16,8 @@
     <xacro:macro name="mock_swerve_interfaces" params="prefix">
       <joint name="${prefix}_steering_joint">
         <command_interface name="position">
-          <param name="min">-1.745329252</param>
-          <param name="max">1.745329252</param>
+          <param name="min">-2.88</param>
+          <param name="max">2.88</param>
         </command_interface>
         <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
         <state_interface name="velocity"/>

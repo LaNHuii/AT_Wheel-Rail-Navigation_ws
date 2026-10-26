@@ -1,3 +1,5 @@
+"""启动使用 SocketCAN 的真车底盘网关。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

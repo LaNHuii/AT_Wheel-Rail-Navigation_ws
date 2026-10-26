@@ -1,0 +1,26 @@
+# 轨道入口点云几何检测参数。距离单位为 m，角度单位为 rad。
+# 更换 MID-360S 安装位置后先校验 TF，不要用 ROI 偏置去补偿错误外参。
+rail_entry_perception:
+  ros__parameters:
+    base_frame: base_link
+    max_points: 80000
+    roi_min_x: 0.15
+    roi_max_x: 4.0
+    roi_half_width: 1.2
+    roi_min_z: -0.45
+    roi_max_z: 0.10
+    ground_bin_size: 0.01
+    rail_min_height: 0.015
+    rail_max_height: 0.085
+    line_distance_threshold: 0.025
+    minimum_line_points: 35
+    ransac_iterations: 120
+    maximum_heading: 0.610865238
+    maximum_parallel_error: 0.122173048
+    expected_spacing: 0.60
+    spacing_tolerance: 0.08
+    minimum_visible_length: 0.80
+    obstacle_min_height: 0.10
+    obstacle_corridor_margin: 0.10
+    obstacle_lookahead: 2.0
+    minimum_obstacle_points: 5

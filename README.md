@@ -12,7 +12,7 @@ repository and all external reference projects are treated as read-only inputs.
 - Four independently driven and independently steered wheel modules
 - Steering range: approximately -165 to +165 degrees in the supplied model
 - Four inner rail rollers driven coaxially with the ground tyres
-- Livox MID-360S point cloud, fixed 45 degrees forward/downward; its built-in
+- Livox MID-360S point cloud, fixed 20 degrees forward/downward; its built-in
   IMU is not used as the primary localization IMU
 - Chassis-mounted primary IMU sampled by STM32 and sent to the IPC over CAN-FD
 - One front RGB-D camera (exact model pending) and one forward/downward MID-360S;
@@ -28,11 +28,15 @@ repository and all external reference projects are treated as read-only inputs.
 | `wr_rail_controller` | Rail clamp state machine, rail-mode drive and entry/exit transition policies |
 | `wr_chassis_gateway` | Dry-run/SocketCAN backends, CAN-FD codec and STM32 SDK contract |
 | `wr_person_following` | Behavior-tree action endpoint and free/rail local follow state machine |
-| `wr_lidar_safety` | MID-360S freshness, stop corridor and safe-rotation evidence |
-| `wr_gazebo` | Gazebo worlds, controller configuration and simulation launch files |
+| `wr_lidar_safety` | MID-360S freshness, stop corridors and bounded free-surface bypass evidence |
+| `wr_rail_perception` | Point-cloud rail pair detection, entrance pose and traversability estimate |
+| `wr_localization` | Wheel odometry and chassis-IMU local EKF for control and trajectory audit |
+| `wr_task_manager` | BehaviorTree.CPP task sequencing and explicit motion ownership transfer |
+| `wr_gazebo` | Gazebo worlds, controller configuration and end-to-end workflow verification |
 
-Localization, rail-entrance perception, bounded free-surface bypass and harvest
-audit packages will be added behind the contracts in `wr_interfaces`.
+The RGB-D target producer remains owned by the vision group. Global mapping,
+global route planning and automatic crop-row coverage are intentionally outside
+the first person-following release.
 
 ## Build
 
@@ -52,8 +56,9 @@ The earlier physical-model, clamp and fixed-front staged-entry Gazebo baseline i
 preserved. The current real-vehicle branch now has stable vision/safety/follow
 interfaces, a bounded person-follow local state machine, conservative point-cloud
 safety zones, a single-owner velocity arbiter, an IPC-to-STM32 CAN-FD adapter and
-primary chassis-IMU transport. Free-surface obstacle bypass, the RGB-D target
-producer, rail-entrance point-cloud estimation, local odometry and the executable
-top-level behavior tree are not yet complete. Real torque thresholds, sensor
-extrinsics, CAN hardware bring-up and fault-code calibration also remain vehicle
-integration work.
+primary chassis-IMU transport. It also includes bounded free-surface bypass,
+rail-entrance point-cloud estimation, wheel/IMU local odometry, an executable
+top-level behavior tree and a Gazebo workflow verifier covering follow, staged
+entry, rail motion, exit and remote takeover/rearm. The RGB-D target producer,
+real torque thresholds, measured sensor extrinsics, CAN hardware bring-up and
+fault-code calibration remain vehicle-integration work.

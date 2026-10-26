@@ -1,3 +1,5 @@
+"""验证舍轮运动学、转向角等价化与回零夹轨阶段逻辑。"""
+
 from wr_rail_controller.swerve_math import calculate_swerve_commands
 from wr_rail_controller.transition_logic import (
     ALL_MODULES_MASK,

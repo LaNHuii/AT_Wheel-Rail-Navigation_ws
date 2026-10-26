@@ -1,3 +1,5 @@
+# 仿真专用轨道控制参数，部分行程为缩短测试时间而设置。
+# 本文件数值不得直接作为实车标定结果。
 rail_controller:
   ros__parameters:
     use_sim_time: true

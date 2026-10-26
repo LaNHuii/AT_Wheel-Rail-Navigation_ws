@@ -1,3 +1,5 @@
+# 实车轨道运动、夹轨和进离轨参数。角度单位为 rad，速度单位为 SI 制。
+# 夹轨接触转矩、硬过流和堵转阈值待与 STM32 实车联调；硬保护不得依赖上位机。
 rail_controller:
   ros__parameters:
     use_sim_time: false

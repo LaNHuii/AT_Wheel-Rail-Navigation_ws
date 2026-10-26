@@ -1,3 +1,5 @@
+"""启动标准轨道入口仿真场景。"""
+
 import os
 import sys
 

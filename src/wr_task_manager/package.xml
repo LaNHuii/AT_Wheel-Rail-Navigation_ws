@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>wr_task_manager</name>
+  <version>0.1.0</version>
+  <description>BehaviorTree.CPP mission coordinator for wheel-rail person following.</description>
+  <maintainer email="maintainer@example.com">AT Wheel-Rail Navigation Team</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>behaviortree_cpp_v3</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>std_msgs</depend>
+  <depend>wr_interfaces</depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

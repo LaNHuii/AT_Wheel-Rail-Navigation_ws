@@ -1,3 +1,5 @@
+// 文件用途：交付给 STM32 电控组的 CAN-FD SDK 数据合约。
+// 本文件保持 C ABI 和固定宽度字段，修改前必须同步协议版本及接口文档。
 #ifndef WR_CHASSIS_GATEWAY__STM32_CAN_SDK_CONTRACT_H_
 #define WR_CHASSIS_GATEWAY__STM32_CAN_SDK_CONTRACT_H_
 

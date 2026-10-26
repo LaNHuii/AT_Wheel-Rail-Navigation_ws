@@ -1,3 +1,5 @@
+// 文件用途：对仲裁后的底盘速度再执行限幅、超时和模式约束。
+// 限速与超时参数在 config/chassis_gateway.yaml 中调整，STM32 仍保留最终硬保护权。
 #include <chrono>
 #include <cmath>
 #include <functional>

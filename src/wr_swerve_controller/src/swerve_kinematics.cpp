@@ -1,3 +1,4 @@
+// 文件用途：实现四舍轮逆运动学、最短转向等价化和转向限位。
 #include "wr_swerve_controller/swerve_kinematics.hpp"
 
 #include <algorithm>

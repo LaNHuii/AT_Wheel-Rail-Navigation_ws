@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""验收自然进轨状态机的阶段顺序、超时和失败处理。"""
 
 import math
 import sys

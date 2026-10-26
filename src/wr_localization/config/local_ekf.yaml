@@ -1,0 +1,30 @@
+# 本地定位 EKF：融合 STM32 主 IMU 和轮速里程计，不使用 MID-360S 内置 IMU。
+# 第一版仅运行在平面模式，用于局部控制和作业轨迹复核，不声称具备全局定位能力。
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.20
+    two_d_mode: true
+    publish_tf: true
+    publish_acceleration: false
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    odom0: wheel/odometry
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    imu0: imu/data_raw
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  true,  true,  false]
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true
+    use_control: false

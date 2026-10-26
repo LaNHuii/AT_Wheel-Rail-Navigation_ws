@@ -1,3 +1,5 @@
+"""启动含物理接触的双圆轨 Gazebo 场景。"""
+
 import os
 import sys
 

@@ -1,3 +1,5 @@
+"""验证单轮转矩接触停止、夹轨超时和过转矩失败处理。"""
+
 import math
 
 import pytest
@@ -25,7 +27,7 @@ def test_tracks_each_module_independently():
     detector = ClampDetector(confirmation_samples=1)
     angles = [math.radians(4.0)] * 4
     assert detector.update(angles, [0.0] * 4, [2.0, 0.0, 2.0, 0.0]) == [True, False, True, False]
-    # A confirmed module remains stopped even if holding torque later falls.
+    # 模块确认接触后保持停止，即使后续保持转矩降低也不重新加角。
     assert detector.update(angles, [0.0] * 4, [0.0, 0.0, 0.0, 0.0]) == [True, False, True, False]
 
 

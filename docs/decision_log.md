@@ -28,10 +28,10 @@ possible later.
 ## D004: Localization rollout
 
 1. Validate model and controllers using simulation ground truth.
-2. Validate wheel odometry as monitoring data, not the primary pose source.
-3. Introduce simulated MID-360 and IMU.
-4. Run FAST-LIO2 and compare against Gazebo truth.
-5. Add global relocalization only after the local pose chain is measurable.
+2. Fuse wheel odometry and the chassis primary IMU for short-term local pose.
+3. Record local pose for controller support and post-task trajectory audit.
+4. Add FAST-LIO2/global relocalization only if later experiments show that
+   person-led operation requires a globally consistent map.
 
 ## D005: Provisional geometry
 
@@ -43,7 +43,7 @@ geometry. Every provisional value must remain configurable and documented.
 
 ## D006: Fixed-front rail entry and staged proof
 
-- MID-360S is fixed at 45 degrees forward/downward.
+- MID-360S is nominally fixed at 20 degrees forward/downward.
 - Only the mechanical sensor-front may enter a rail first; mission planning must
   insert a 180-degree turn when the next entrance faces the opposite direction.
 - One generic clamp command is reused with a module bitmask instead of creating
@@ -56,12 +56,19 @@ geometry. Every provisional value must remain configurable and documented.
 ## 2026-10-08：任务转为人物跟随采收运输
 
 - 指定采摘者负责带路；系统不再根据覆盖清单自主选择下一条轨道。
-- 视觉使用一个前置 RGB-D 相机，MID-360S 固定向前下倾 45°；取消后置相机模型。
+- 视觉使用一个前置 RGB-D 相机和一台前向下倾 MID-360S；取消后置相机模型。
 - 自由路面允许跟随、车头转向和有界绕障；轨道内只允许纵向跟随。
-- 自由路面丢失目标后先停 30 s，再在整车旋转区域安全时搜索一圈；轨道内丢失只等待。
-- 明确丢失后允许视觉重新绑定其他合适人员；健康目标不得因旁人更近而被替换。
+- 首版目标丢失只停车等待，不实现主动搜索和自动换人；这些能力留待视觉身份链稳定后增加。
 - 行为树负责任务编排和运动权切换，人物跟随、点云安全及进退轨各自使用局部状态机。
 
 Reason: one forward 3D lidar avoids a second lidar while keeping entrance
 geometry observable. The current vehicle has one front RGB-D camera and no
 rearward perception, so reverse autonomous motion is outside the accepted scope.
+
+## 2026-10-15：MID-360S 安装倾角调整
+
+- MID-360S 的标称安装姿态由向前下倾 45°调整为向前下倾 20°。
+- 固定传感器前端进轨、单雷达和前向退出策略保持不变。
+- 20°仅是当前机械安装标称值；实车外参标定结果作为点云转换的最终依据。
+
+Reason: 20°安装姿态在保留近地轨道观测能力的同时扩大前向障碍物与人员周边环境的有效视野。

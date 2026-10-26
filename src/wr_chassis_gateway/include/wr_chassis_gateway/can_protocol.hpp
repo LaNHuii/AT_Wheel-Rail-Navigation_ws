@@ -1,3 +1,5 @@
+// 文件用途：定义上位机与 STM32 之间的 CAN-FD 帧编解码数据结构。
+// 缩放系数、字段单位和故障位必须与 docs/can_bt_fsm_stm32_interface.md 保持一致。
 #pragma once
 
 #include <array>

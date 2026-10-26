@@ -5,4 +5,5 @@ bool forward_path_blocked
 bool bypass_active
 bool rotation_safe
 float32 nearest_obstacle_distance
+float32 suggested_lateral_velocity
 string reason

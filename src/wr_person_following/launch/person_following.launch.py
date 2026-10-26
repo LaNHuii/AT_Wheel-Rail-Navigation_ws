@@ -1,3 +1,5 @@
+"""启动人物跟随 Action 节点并加载跟随调车参数。"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory

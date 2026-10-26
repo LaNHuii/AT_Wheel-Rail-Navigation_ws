@@ -1,3 +1,5 @@
+"""检查 URDF 质量、惯量、关节限位、简化碰撞体和传感器外参假设。"""
+
 import math
 import pathlib
 import subprocess
@@ -87,7 +89,7 @@ def test_required_sensor_frames_are_present():
     assert 'rear_camera_link' not in links
     joints = {joint.attrib['name']: joint for joint in root.findall('joint')}
     rpy = [float(value) for value in joints['mid360_joint'].find('origin').attrib['rpy'].split()]
-    assert math.isclose(rpy[1], math.radians(45.0), abs_tol=1e-8)
+    assert math.isclose(rpy[1], math.radians(20.0), abs_tol=1e-8)
 
 
 if __name__ == '__main__':

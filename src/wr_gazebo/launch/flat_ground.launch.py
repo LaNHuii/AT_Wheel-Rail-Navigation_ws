@@ -1,3 +1,5 @@
+"""启动平地 Gazebo 场景，用于舍轮基本运动回归测试。"""
+
 import os
 import re
 

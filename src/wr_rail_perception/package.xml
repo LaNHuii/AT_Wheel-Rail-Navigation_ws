@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>wr_rail_perception</name>
+  <version>0.1.0</version>
+  <description>MID-360S geometric rail-entry perception for the wheel-rail chassis.</description>
+  <maintainer email="maintainer@example.com">AT Wheel-Rail Navigation Team</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>ament_index_python</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>sensor_msgs_py</depend>
+  <depend>tf2_ros</depend>
+  <depend>wr_interfaces</depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

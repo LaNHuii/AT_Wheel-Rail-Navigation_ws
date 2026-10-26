@@ -1,3 +1,5 @@
+"""夹轨任务的通用阶段逻辑，负责超时、接触位图和失败原因判定。"""
+
 from dataclasses import dataclass
 
 

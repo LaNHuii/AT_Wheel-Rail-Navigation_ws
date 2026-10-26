@@ -7,7 +7,9 @@ install(DIRECTORY config launch urdf worlds DESTINATION share/${PROJECT_NAME})
 install(
   PROGRAMS
     scripts/gazebo_command_adapter.py
+    scripts/sim_chassis_backend.py
     scripts/verify_flat_ground.py
+    scripts/verify_person_follow_workflow.py
     scripts/verify_static_rail.py
     scripts/verify_rail_motion.py
     scripts/verify_rail_clamp.py
